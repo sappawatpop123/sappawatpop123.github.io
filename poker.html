@@ -156,6 +156,12 @@
       justify-content: center;
     }
   }
+  .raised-amount {
+    font-size: 1.1rem;
+    color: #f0d86a;
+    margin-top: 0.3rem;
+    font-weight: 700;
+  }
   .sr-only {
     position: absolute;
     width: 1px;
@@ -291,9 +297,11 @@
             placeBet(parseInt(betValue, 10), playerIndex);
           } else if (target.classList.contains('all-in') && gamePhase === 'raising') {
             placeBet('all-in', playerIndex);
-          } else if (target.classList.contains('reset-chips') && gamePhase === 'raising') {
-            confirmResetChips(playerIndex);
           }
+          // Removed reset-chips button handler
+          // else if (target.classList.contains('reset-chips') && gamePhase === 'raising') {
+          //   confirmResetChips(playerIndex);
+          // }
         }
       });
     });
@@ -351,6 +359,12 @@
       chipCountDiv.textContent = player.chips;
       div.appendChild(chipCountDiv);
 
+      // Raised amount display
+      const raisedAmountDiv = document.createElement('div');
+      raisedAmountDiv.classList.add('raised-amount');
+      raisedAmountDiv.textContent = `Raised: ${player.currentBet}`;
+      div.appendChild(raisedAmountDiv);
+
       // Betting controls container
       const betControls = document.createElement('div');
       betControls.classList.add('chip-controls');
@@ -375,12 +389,12 @@
       betControls.appendChild(allInBtn);
 
       // Reset button
-      const resetBtn = document.createElement('button');
-      resetBtn.textContent = 'Reset';
-      resetBtn.title = 'Reset chips to starting amount';
-      resetBtn.classList.add('reset-chips');
-      resetBtn.disabled = player.chips === player.startingChips || gamePhase !== 'raising';
-      betControls.appendChild(resetBtn);
+      // const resetBtn = document.createElement('button');
+      // resetBtn.textContent = 'Reset';
+      // resetBtn.title = 'Reset chips to starting amount';
+      // resetBtn.classList.add('reset-chips');
+      // resetBtn.disabled = player.chips === player.startingChips || gamePhase !== 'raising';
+      // betControls.appendChild(resetBtn);
 
       div.appendChild(betControls);
 
