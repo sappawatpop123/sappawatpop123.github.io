@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Werewolf Game</title>
+<link rel="icon" href="images/wolf-icon.png">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Uncial+Antiqua&display=swap');
 
@@ -117,7 +118,6 @@
     color: #f0e6d2;
   }
   .player.alive::before {
-    content: url('https://i.ibb.co/2kRZqZP/werewolf-icon.png');
     position: absolute;
     left: 0;
     top: 2px;
@@ -137,8 +137,10 @@
 <h1>Werewolf Game</h1>
 
 <div id="startArea">
-  <label for="playerCount">Select Player Count:</label>
-  <select id="playerCount">
+  <label for="playerCount" style="display: flex; flex-direction: column; font-weight: 700; font-size: 1.1rem; color: #f0e6d2;" id="playerCountDesc">
+    Select Player Count
+  </label>
+  <select id="playerCount" aria-describedby="playerCountDesc" style="margin-top: 0.25rem; padding: 0.4rem 0.8rem; font-size: 1.1rem; border-radius: 8px; border: none; outline: none; box-shadow: inset 0 0 5px #660000; background-color: #330000; color: #f0e6d2; font-weight: 700;">
     <option value="6">6</option>
     <option value="7">7</option>
     <option value="8">8</option>
@@ -179,9 +181,9 @@
   let players = [];
   let currentPhase = 0;
   const phases = [
-    'Day: Everyone wakes up. Jester can use skill (voting).',
-    'Night (before werewolf): Seer, Bodyguard, Hunter, Spellcaster, Cupid use skills.',
     'Night (werewolf): Werewolves choose a player to kill.',
+    'Night (before werewolf): Seer, Bodyguard, Hunter, Spellcaster, Cupid use skills.',
+    'Day: Everyone wakes up. Jester can use skill (voting).',
     'End of turn: Summary and prepare for next turn.'
   ];
 
@@ -272,7 +274,7 @@
     // Only alive players can vote
     const alivePlayers = players.filter(p => p.alive);
     jesterVotes = {};
-    actionArea.innerHTML = '<h4>Jester Voting: Vote a player to lynch</h4>';
+    actionArea.innerHTML = ''; // Removed the "Jester Voting: Vote a player to lynch" message
     alivePlayers.forEach(voter => {
       if (voter.role === 'Jester' && voter.alive) {
         // Jester does not vote
@@ -659,7 +661,8 @@
       const p = document.createElement('div');
       p.className = 'player ' + (player.alive ? 'alive' : 'dead');
       const displayName = player.name ? player.name : `Player ${player.id}`;
-      p.textContent = `${displayName} - ${player.role}` + (player.silenced ? ' (Silenced)' : '');
+      // Hide player roles by only showing the player name
+      p.textContent = `${displayName}` + (player.silenced ? ' (Silenced)' : '');
       playerListDiv.appendChild(p);
     });
   }
