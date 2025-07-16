@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Poker Chip Simulator</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: radial-gradient(circle at center, #0b3d0b 0%, #062006 80%);
+    color: #f0e6d2;
+    -webkit-user-select: none; /* Disable text selection on iPad */
+    user-select: none;
+    overflow-x: hidden;
+  }
+  h1 {
+    text-align: center;
+    margin: 1rem 0;
+    font-weight: 900;
+    text-shadow: 0 0 8px #f0e6d2;
+  }
+  .controls {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+    background: rgba(0,0,0,0.4);
+    padding: 1rem;
+    border-radius: 12px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  label {
+    display: flex;
+    flex-direction: column;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #f0e6d2;
+  }
+  select, input[type=number] {
+    margin-top: 0.25rem;
+    padding: 0.4rem 0.8rem;
+    font-size: 1.1rem;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+    box-shadow: inset 0 0 5px #0a5a0a;
+    background-color: #0b3d0b;
+    color: #f0e6d2;
+    font-weight: 700;
+  }
+  button {
+    background: radial-gradient(circle at center, #d4af37 0%, #b8860b 80%);
+    border: none;
+    color: #2c2a1d;
+    padding: 0.6rem 1.2rem;
+    font-size: 1.1rem;
+    font-weight: 900;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    box-shadow: 0 0 10px #d4af37;
+  }
+  button:hover {
+    background: radial-gradient(circle at center, #f0d86a 0%, #d4af37 80%);
+  }
+  .table-container {
+    position: relative;
+    width: 90vw;
+    max-width: 700px;
+    height: 80vw;
+    max-height: 600px;
+    margin: 0 auto 4rem auto;
+    background: radial-gradient(circle at center, #0b3d0b 0%, #062006 80%);
+    border-radius: 50%;
+    box-shadow: inset 0 0 40px #0a5a0a;
+  }
+  .players {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .player {
+    position: absolute;
+    width: 120px;
+    height: 140px;
+    background: linear-gradient(145deg, #1a3a1a, #0b2a0b);
+    border-radius: 15px;
+    box-shadow: 0 0 10px #0a5a0a;
+    color: #d4af37;
+    font-weight: 700;
+    text-align: center;
+    padding: 0.5rem;
+    pointer-events: auto;
+    user-select: none;
+    transition: box-shadow 0.3s ease, background 0.3s ease;
+  }
+  .player.current-turn {
+    box-shadow: 0 0 25px 6px #f0d86a;
+    background: linear-gradient(145deg, #5a7a1a, #4b6a0b);
+  }
+  .player .role {
+    font-size: 1.1rem;
+    margin-bottom: 0.3rem;
+    color: #f0d86a;
+  }
+  .chip-count {
+    font-size: 1.4rem;
+    margin: 0.5rem 0;
+  }
+  .chip-controls {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  .chip-controls button {
+    width: 50px;
+    height: 50px;
+    border-radius: 25%;
+    border: 2px solid #d4af37;
+    background: radial-gradient(circle at center, #d4af37 0%, #b8860b 80%);
+    color: #2c2a1d;
+    font-weight: 900;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 8px #d4af37;
+    transition: background 0.3s ease;
+  }
+  .chip-controls button:hover {
+    background: radial-gradient(circle at center, #f0d86a 0%, #d4af37 80%);
+  }
+  @media (max-width: 600px) {
+    .player {
+      width: 90px;
+      height: 110px;
+      font-size: 0.9rem;
+    }
+    .chip-controls button {
+      width: 40px;
+      height: 40px;
+      font-size: 0.9rem;
+      border-radius: 25%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    border: 0;
+  }
+</style>
+</head>
+<body>
+<h1>Poker Chip Simulator</h1>
+
+<div id="startPage" class="controls" role="region" aria-label="Game setup controls">
+  <label for="numPlayers">
+    Number of Players
+    <select id="numPlayers" aria-describedby="numPlayersDesc">
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4" selected>4</option>
+      <option value="5">5</option>
+      <option value="6">6</option>
+      <option value="7">7</option>
+      <option value="8">8</option>
+    </select>
+  </label>
+  <span id="numPlayersDesc" class="sr-only">Select number of players from 2 to 8</span>
+  <label for="startingChips">
+    Starting Chips
+    <input type="number" id="startingChips" value="1000" min="10" step="100" aria-describedby="startingChipsDesc" />
+  </label>
+  <span id="startingChipsDesc" class="sr-only">Enter starting chips amount, minimum 10, step 100</span>
+  <button id="startGameBtn" type="button">Start Game</button>
+</div>
+
+<div id="gamePage" class="table-container" style="display:none;" role="region" aria-label="Poker game table">
+  <div class="players" id="playersContainer"></div>
+    <div id="gameTeller" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #d4af37; font-weight: 700; text-align: center; width: 180px;">
+      <div id="potContainer" style="font-size: 1.3rem; margin-bottom: 0.5rem;">
+        Pot: <span id="potAmount">0</span> chips
+      </div>
+      <div>
+        <button id="chooseWinnerBtn" type="button" style="margin-bottom: 0.5rem;">Choose The Winner</button>
+      </div>
+      <div>
+        <button id="nextRoundBtn" type="button" style="margin-bottom: 0.5rem;">Next Round</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for choosing winner -->
+  <div id="chooseWinnerModal" style="display:none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: #0b3d0b; border-radius: 12px; padding: 1rem 2rem; max-width: 300px; width: 90%; color: #f0e6d2; text-align: center; box-shadow: 0 0 15px #d4af37;">
+      <h2>Choose The Winner</h2>
+      <p>Are you sure you want to choose the winner?</p>
+      <label for="winnerSelect">Select Winner:</label>
+      <select id="winnerSelect" style="margin: 0.5rem 0; padding: 0.4rem 0.8rem; font-size: 1.1rem; border-radius: 8px; border: none; outline: none; background-color: #0b3d0b; color: #f0e6d2; font-weight: 700; width: 100%;">
+      </select>
+      <div style="margin-top: 1rem; display: flex; justify-content: space-between;">
+        <button id="confirmWinnerBtn" style="background: radial-gradient(circle at center, #d4af37 0%, #b8860b 80%); border: none; color: #2c2a1d; padding: 0.6rem 1.2rem; font-size: 1.1rem; font-weight: 900; border-radius: 50px; cursor: pointer; box-shadow: 0 0 10px #d4af37;">Confirm</button>
+        <button id="cancelWinnerBtn" style="background: radial-gradient(circle at center, #555 0%, #333 80%); border: none; color: #f0e6d2; padding: 0.6rem 1.2rem; font-size: 1.1rem; font-weight: 900; border-radius: 50px; cursor: pointer;">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Roles for players in order
+    const roles = ['Dealer', 'Small Blind', 'Big Blind', 'Player'];
+
+    // Game state variables
+    let players = [];
+    let currentTurnIndex = 0;
+    let pot = 0;
+    // let callAmount = 0;
+    let gamePhase = 'raising'; // 'raising', 'winning', 'nextRound'
+
+    // DOM elements
+    let numPlayersSelect;
+    let startingChipsInput;
+    let startGameBtn;
+    let playersContainer;
+    let potAmountSpan;
+    // let callAmountSpan;
+    let startPage;
+    let gamePage;
+    let chooseWinnerBtn;
+    let chooseWinnerModal;
+    let winnerSelect;
+    let confirmWinnerBtn;
+    let cancelWinnerBtn;
+
+    // Initialize DOM references and event listeners after DOM content loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      numPlayersSelect = document.getElementById('numPlayers');
+      startingChipsInput = document.getElementById('startingChips');
+      startGameBtn = document.getElementById('startGameBtn');
+      playersContainer = document.getElementById('playersContainer');
+      potAmountSpan = document.getElementById('potAmount');
+      // callAmountSpan = document.getElementById('callAmount');
+      startPage = document.getElementById('startPage');
+      gamePage = document.getElementById('gamePage');
+      chooseWinnerBtn = document.getElementById('chooseWinnerBtn');
+      chooseWinnerModal = document.getElementById('chooseWinnerModal');
+      winnerSelect = document.getElementById('winnerSelect');
+      confirmWinnerBtn = document.getElementById('confirmWinnerBtn');
+      cancelWinnerBtn = document.getElementById('cancelWinnerBtn');
+
+      startGameBtn.addEventListener('click', startGame);
+      chooseWinnerBtn.addEventListener('click', openChooseWinnerModal);
+      confirmWinnerBtn.addEventListener('click', confirmChooseWinner);
+      cancelWinnerBtn.addEventListener('click', closeChooseWinnerModal);
+
+      // Add event listener for next round button
+      const nextRoundBtn = document.getElementById('nextRoundBtn');
+      nextRoundBtn.addEventListener('click', () => {
+        startNextRoundWithDealerCycle();
+      });
+
+      // Use event delegation for betting buttons inside playersContainer
+      playersContainer.addEventListener('click', (event) => {
+        const target = event.target;
+        if (target.tagName === 'BUTTON') {
+          // Find the player index from the clicked button's parent player div
+          let playerDiv = target.closest('.player');
+          if (!playerDiv) return;
+          const playerIndex = Array.from(playersContainer.children).indexOf(playerDiv);
+          if (playerIndex === -1) return;
+
+          const betValue = target.getAttribute('data-bet-value');
+          if (betValue && gamePhase === 'raising') {
+            placeBet(parseInt(betValue, 10), playerIndex);
+          } else if (target.classList.contains('all-in') && gamePhase === 'raising') {
+            placeBet('all-in', playerIndex);
+          } else if (target.classList.contains('reset-chips') && gamePhase === 'raising') {
+            confirmResetChips(playerIndex);
+          }
+        }
+      });
+    });
+
+    // Create player element with controls and position
+    function createPlayerElement(player, index, totalPlayers) {
+      const div = document.createElement('div');
+      div.classList.add('player');
+      if (index === currentTurnIndex && gamePhase === 'raising') {
+        div.classList.add('current-turn');
+        div.setAttribute('aria-current', 'true');
+      } else {
+        div.removeAttribute('aria-current');
+      }
+
+      // Position players in a circle
+      let angleOffset = Math.PI / 2;
+      if (totalPlayers === 7) {
+        angleOffset = Math.PI / 2.5; // Increase angle offset for 7 players to lower player 1 position more
+      }
+      const angle = (index / totalPlayers) * 2 * Math.PI - angleOffset;
+      // Dynamically adjust radius based on number of players
+      let radius = 38; // default radius
+      if (totalPlayers >= 5 && totalPlayers <= 6) {
+        radius = 50; // increase radius for 5 and 6 players to space them farther apart
+      } else if (totalPlayers === 7) {
+        radius = 55; // reduce radius slightly for 7 players to bring players nearer
+      } else if (totalPlayers === 8) {
+        radius = 50; // increase radius for 8 players to space them farther apart
+      }
+      const x = 50 + radius * Math.cos(angle);
+      const y = 50 + radius * Math.sin(angle);
+      div.style.left = x + '%';
+      div.style.top = y + '%';
+      div.style.transform = 'translate(-50%, -50%)';
+
+      // Determine role based on current turn
+      const roleIndex = getRoleIndex(index);
+      const role = roles[roleIndex] || 'Player';
+
+      // Role display
+      const roleDiv = document.createElement('div');
+      roleDiv.classList.add('role');
+      roleDiv.textContent = role;
+      div.appendChild(roleDiv);
+
+      // Player name
+      const nameDiv = document.createElement('div');
+      nameDiv.textContent = `Player ${index + 1}`;
+      div.appendChild(nameDiv);
+
+      // Chip count display
+      const chipCountDiv = document.createElement('div');
+      chipCountDiv.classList.add('chip-count');
+      chipCountDiv.textContent = player.chips;
+      div.appendChild(chipCountDiv);
+
+      // Betting controls container
+      const betControls = document.createElement('div');
+      betControls.classList.add('chip-controls');
+
+      // Betting buttons for fixed values
+      const betValues = [10, 50, 100, 500];
+      betValues.forEach(value => {
+        const btn = document.createElement('button');
+        btn.textContent = value;
+        btn.title = `Bet ${value} chips`;
+        btn.setAttribute('data-bet-value', value);
+        btn.disabled = player.chips < value || gamePhase !== 'raising';
+        betControls.appendChild(btn);
+      });
+
+      // All-in button
+      const allInBtn = document.createElement('button');
+      allInBtn.textContent = 'All-In';
+      allInBtn.title = 'Bet all chips';
+      allInBtn.classList.add('all-in');
+      allInBtn.disabled = player.chips === 0 || gamePhase !== 'raising';
+      betControls.appendChild(allInBtn);
+
+      // Reset button
+      const resetBtn = document.createElement('button');
+      resetBtn.textContent = 'Reset';
+      resetBtn.title = 'Reset chips to starting amount';
+      resetBtn.classList.add('reset-chips');
+      resetBtn.disabled = player.chips === player.startingChips || gamePhase !== 'raising';
+      betControls.appendChild(resetBtn);
+
+      div.appendChild(betControls);
+
+      return div;
+    }
+
+    // Get role index based on player position relative to current turn
+    function getRoleIndex(playerIndex) {
+      const relativeIndex = (playerIndex - currentTurnIndex + players.length) % players.length;
+      if (relativeIndex === 0) return 0; // Dealer
+      if (relativeIndex === 1) return 1; // Small Blind
+      if (relativeIndex === 2) return 2; // Big Blind
+      return 3; // Player
+    }
+
+    // Render all players on the table
+    function renderPlayers() {
+      playersContainer.innerHTML = '';
+      players.forEach((player, index) => {
+        const playerEl = createPlayerElement(player, index, players.length);
+        playersContainer.appendChild(playerEl);
+      });
+      potAmountSpan.textContent = pot;
+    // roundWinnerBtn.disabled = gamePhase !== 'winning' || pot === 0;
+    // updateCallAmount(callAmount);
+    }
+
+    // Start the game with selected number of players and starting chips
+    function startGame() {
+      const numPlayers = parseInt(numPlayersSelect.value, 10);
+      const startingChips = parseInt(startingChipsInput.value, 10);
+
+      players = [];
+      for (let i = 0; i < numPlayers; i++) {
+        players.push({ chips: startingChips, startingChips: startingChips, currentBet: 0 });
+      }
+      pot = 0;
+      currentTurnIndex = 0;
+      callAmount = 0;
+      gamePhase = 'raising';
+      renderPlayers();
+
+    // nextTurnBtn.disabled = true; // Disable next turn button since all players raise together now
+
+      // Show game page, hide start page
+      startPage.style.display = 'none';
+      gamePage.style.display = 'block';
+    }
+
+    // Confirm reset chips for a specific player to starting chips
+    function confirmResetChips(playerIndex) {
+      // Removed confirmation alert as per user request
+      resetChips(playerIndex);
+    }
+
+    // Reset chips for a specific player to starting chips and return bet from pot
+    function resetChips(playerIndex) {
+      const player = players[playerIndex];
+      // Return player's current bet from pot to player's chips
+      pot -= player.currentBet;
+      player.chips += player.currentBet;
+      player.currentBet = 0;
+      renderPlayers();
+    }
+
+    // Move to the next player's turn
+    function nextTurn() {
+      currentTurnIndex = (currentTurnIndex + 1) % players.length;
+      renderPlayers();
+    }
+
+    // Start the next round: reset pot, callAmount, set phase to raising, reset currentTurnIndex
+    function startNextRound() {
+      pot = 0;
+      callAmount = 0;
+      currentTurnIndex = 0;
+      gamePhase = 'raising';
+      renderPlayers();
+    }
+
+    // Start the next round with dealer cycle: advance dealer, reset pot and bets, set phase to raising
+    function startNextRoundWithDealerCycle() {
+      pot = 0;
+      callAmount = 0;
+      // Reset current bets for all players
+      players.forEach(player => {
+        player.currentBet = 0;
+      });
+      // Advance dealer to next player
+      currentTurnIndex = (currentTurnIndex + 1) % players.length;
+      gamePhase = 'raising';
+      renderPlayers();
+    }
+
+    // Place a bet of given amount or all-in for specified player index
+    function placeBet(amount, playerIndex) {
+      const player = players[playerIndex];
+      let betAmount = amount;
+      if (amount === 'all-in') {
+        betAmount = player.chips;
+      }
+      if (betAmount > player.chips) {
+        betAmount = player.chips;
+      }
+      if (betAmount > 0) {
+        player.chips -= betAmount;
+        pot += betAmount;
+        player.currentBet += betAmount; // Track player's current bet
+      // updateCallAmount(betAmount);
+        renderPlayers();
+      }
+    }
+
+    // Open the choose winner modal and populate player options
+    function openChooseWinnerModal() {
+      if (pot === 0) {
+        alert('The pot is empty. No winner can be chosen.');
+        return;
+      }
+      winnerSelect.innerHTML = '';
+      players.forEach((player, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = `Player ${index + 1}`;
+        winnerSelect.appendChild(option);
+      });
+      chooseWinnerModal.style.display = 'flex';
+    }
+
+    // Close the choose winner modal
+    function closeChooseWinnerModal() {
+      chooseWinnerModal.style.display = 'none';
+    }
+
+    // Confirm the winner selection and transfer pot chips
+    function confirmChooseWinner() {
+      const winnerIndex = parseInt(winnerSelect.value, 10);
+      if (isNaN(winnerIndex) || winnerIndex < 0 || winnerIndex >= players.length) {
+        alert('Invalid player selection.');
+        return;
+      }
+      // Transfer pot to winner
+      players[winnerIndex].chips += pot;
+      pot = 0;
+      renderPlayers();
+      closeChooseWinnerModal();
+    }
+  </script>
+</body>
+</html>
