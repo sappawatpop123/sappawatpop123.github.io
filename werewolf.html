@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Werewolf Game</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Uncial+Antiqua&display=swap');
+
+  body {
+    font-family: 'Uncial Antiqua', serif;
+    margin: 20px;
+    background: linear-gradient(135deg, #0b0c0f, #1a1a1a);
+    color: #f0e6d2;
+    background-image: url('werewolf-back.jpg');
+    background-size: cover;
+    background-position: top center;
+    transition: background-color 0.5s ease, color 0.5s ease;
+  }
+  #gameArea {
+    margin-top: 20px;
+    background-color: rgba(10, 10, 10, 0.7);
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 0 20px #660000;
+  }
+  .hidden {
+    display: none;
+  }
+  #playerRoles {
+    margin-top: 20px;
+  }
+  #phaseInfo {
+    margin-top: 20px;
+    font-weight: bold;
+    color: #ff4c4c;
+    text-shadow: 0 0 8px #ff0000;
+  }
+  button {
+    margin-top: 15px;
+    background: linear-gradient(145deg, #660000, #990000);
+    border: none;
+    color: #f0e6d2;
+    padding: 0.8rem 1.6rem;
+    font-weight: 900;
+    font-size: 1.1rem;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 0 12px #ff0000;
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+    font-family: 'Uncial Antiqua', serif;
+  }
+  button:hover, button:focus {
+    background: linear-gradient(145deg, #ff0000, #cc0000);
+    box-shadow: 0 0 20px #ff4c4c;
+    outline: none;
+  }
+  #playerNamesInput {
+    margin-top: 20px;
+    background-color: rgba(30, 0, 0, 0.8);
+    padding: 15px;
+    border-radius: 15px;
+    max-width: 400px;
+    box-shadow: 0 0 15px #990000;
+  }
+  #namesForm {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 15px;
+  }
+  #namesForm label {
+    flex: 1 1 45%;
+    display: flex;
+    flex-direction: column;
+    font-weight: bold;
+    font-size: 1rem;
+    color: #ff4c4c;
+    text-shadow: 0 0 5px #cc0000;
+  }
+  #namesForm input[type="text"] {
+    margin-top: 5px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: none;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #330000;
+  }
+  #namesForm input[type="text"]:focus {
+    outline: 2px solid #ff4c4c;
+  }
+  #playerNamesInput button {
+    margin-top: 15px;
+    width: 100%;
+    font-weight: 900;
+    font-size: 1.1rem;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 0 12px #ff0000;
+    background: linear-gradient(145deg, #660000, #990000);
+    border: none;
+    color: #f0e6d2;
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+    font-family: 'Uncial Antiqua', serif;
+  }
+  #playerNamesInput button:hover, #playerNamesInput button:focus {
+    background: linear-gradient(145deg, #ff0000, #cc0000);
+    box-shadow: 0 0 20px #ff4c4c;
+    outline: none;
+  }
+  .player {
+    margin: 5px 0;
+    position: relative;
+    padding-left: 25px;
+  }
+  .player.alive {
+    color: #f0e6d2;
+  }
+  .player.alive::before {
+    content: url('https://i.ibb.co/2kRZqZP/werewolf-icon.png');
+    position: absolute;
+    left: 0;
+    top: 2px;
+    width: 20px;
+    height: 20px;
+  }
+  .player.dead {
+    color: #666;
+    text-decoration: line-through;
+  }
+  .action-button {
+    margin-left: 10px;
+  }
+</style>
+</head>
+<body>
+<h1>Werewolf Game</h1>
+
+<div id="startArea">
+  <label for="playerCount">Select Player Count:</label>
+  <select id="playerCount">
+    <option value="6">6</option>
+    <option value="7">7</option>
+    <option value="8">8</option>
+    <option value="9">9</option>
+    <option value="10">10</option>
+    <option value="11">11</option>
+    <option value="12">12</option>
+  </select>
+
+  <button id="showNamesButton">Enter Player Names</button>
+
+  <div id="playerNamesInput" class="hidden">
+    <h3>Enter Player Names</h3>
+    <form id="namesForm"></form>
+    <button id="startButton" disabled>Start Game</button>
+  </div>
+</div>
+
+<div id="gameArea" class="hidden">
+  <div id="phaseInfo"></div>
+  <div id="playerList"></div>
+  <div id="actionArea"></div>
+  <button id="nextPhaseButton" class="hidden">Next Phase</button>
+</div>
+
+<script>
+  // Roles and their counts by player count
+  const rolesByPlayerCount = {
+    6: ['Werewolf', 'Seer', 'Jester', 'Bodyguard', 'Hunter', 'Villager'],
+    7: ['Werewolf', 'Seer', 'Jester', 'Bodyguard', 'Hunter', 'Spellcaster', 'Villager'],
+    8: ['Werewolf', 'Werewolf', 'Seer', 'Jester', 'Bodyguard', 'Hunter', 'Spellcaster', 'Villager'],
+    9: ['Werewolf', 'Werewolf', 'Seer', 'Jester', 'Bodyguard', 'Hunter', 'Spellcaster', 'Cupid', 'Villager'],
+    10: ['Werewolf', 'Werewolf', 'Seer', 'Jester', 'Bodyguard', 'Hunter', 'Spellcaster', 'Cupid', 'Villager', 'Villager'],
+    11: ['Werewolf', 'Werewolf', 'Seer', 'Jester', 'Bodyguard', 'Hunter', 'Spellcaster', 'Cupid', 'Villager', 'Villager', 'Villager'],
+    12: ['Werewolf', 'Werewolf', 'Seer', 'Jester', 'Bodyguard', 'Hunter', 'Spellcaster', 'Cupid', 'Villager', 'Villager', 'Villager', 'Villager']
+  };
+
+  let players = [];
+  let currentPhase = 0;
+  const phases = [
+    'Day: Everyone wakes up. Jester can use skill (voting).',
+    'Night (before werewolf): Seer, Bodyguard, Hunter, Spellcaster, Cupid use skills.',
+    'Night (werewolf): Werewolves choose a player to kill.',
+    'End of turn: Summary and prepare for next turn.'
+  ];
+
+  const playerCountSelect = document.getElementById('playerCount');
+  const gameArea = document.getElementById('gameArea');
+  const phaseInfo = document.getElementById('phaseInfo');
+  const playerListDiv = document.getElementById('playerList');
+  const actionArea = document.getElementById('actionArea');
+  const nextPhaseButton = document.getElementById('nextPhaseButton');
+
+  // Cupid linked players
+  let cupidLinked = [];
+
+  // Bodyguard protection
+  let bodyguardProtection = null;
+
+  // Hunter target if killed
+  let hunterTarget = null;
+
+  // Werewolf kill target
+  let werewolfTarget = null;
+
+  // Votes for Jester
+  let jesterVotes = {};
+
+  // Game state flags
+  let gameOver = false;
+
+  function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+  }
+
+  function assignRoles(count) {
+    const roles = rolesByPlayerCount[count].slice();
+    shuffle(roles);
+    players = [];
+    for (let i = 0; i < count; i++) {
+      players.push({ id: i + 1, role: roles[i], alive: true, silenced: false });
+    }
+  }
+
+  function displayPlayers() {
+    playerListDiv.innerHTML = '<h3>Players</h3>';
+    players.forEach(player => {
+      const p = document.createElement('div');
+      p.className = 'player ' + (player.alive ? 'alive' : 'dead');
+      p.textContent = `Player ${player.id} - ${player.role}` + (player.silenced ? ' (Silenced)' : '');
+      playerListDiv.appendChild(p);
+    });
+  }
+
+  function updatePhase() {
+    phaseInfo.textContent = phases[currentPhase];
+    actionArea.innerHTML = '';
+    nextPhaseButton.disabled = false;
+
+    if (gameOver) {
+      phaseInfo.textContent = 'Game Over';
+      nextPhaseButton.textContent = 'Restart Game';
+      nextPhaseButton.classList.remove('hidden');
+      return;
+    }
+
+    switch (currentPhase) {
+      case 0:
+        // Day phase: Jester voting
+        setupJesterVoting();
+        break;
+      case 1:
+        // Night before werewolf: Seer, Bodyguard, Hunter, Spellcaster, Cupid
+        setupNightSpecialRoles();
+        break;
+      case 2:
+        // Werewolf night
+        setupWerewolfKill();
+        break;
+      case 3:
+        // End of turn summary
+        showEndOfTurnSummary();
+        break;
+    }
+  }
+
+  function setupJesterVoting() {
+    // Only alive players can vote
+    const alivePlayers = players.filter(p => p.alive);
+    jesterVotes = {};
+    actionArea.innerHTML = '<h4>Jester Voting: Vote a player to lynch</h4>';
+    alivePlayers.forEach(voter => {
+      if (voter.role === 'Jester' && voter.alive) {
+        // Jester does not vote
+        return;
+      }
+      const label = document.createElement('label');
+      label.textContent = `Player ${voter.id} votes: `;
+      const select = document.createElement('select');
+      select.id = `vote_${voter.id}`;
+      alivePlayers.forEach(target => {
+        if (target.id !== voter.id) {
+          const option = document.createElement('option');
+          option.value = target.id;
+          option.textContent = `Player ${target.id}`;
+          select.appendChild(option);
+        }
+      });
+      label.appendChild(select);
+      actionArea.appendChild(label);
+      actionArea.appendChild(document.createElement('br'));
+    });
+
+    const voteButton = document.createElement('button');
+    voteButton.textContent = 'Submit Votes';
+    voteButton.onclick = () => {
+      // Collect votes
+      jesterVotes = {};
+      alivePlayers.forEach(voter => {
+        if (voter.role === 'Jester' && voter.alive) {
+          return;
+        }
+        const select = document.getElementById(`vote_${voter.id}`);
+        const votedId = parseInt(select.value, 10);
+        if (!jesterVotes[votedId]) {
+          jesterVotes[votedId] = 0;
+        }
+        jesterVotes[votedId]++;
+      });
+      // Find player with most votes
+      let maxVotes = 0;
+      let lynchedPlayerId = null;
+      for (const [playerId, votes] of Object.entries(jesterVotes)) {
+        if (votes > maxVotes) {
+          maxVotes = votes;
+          lynchedPlayerId = parseInt(playerId, 10);
+        }
+      }
+      if (lynchedPlayerId !== null) {
+        lynchPlayer(lynchedPlayerId);
+      }
+      nextPhaseButton.disabled = false;
+      voteButton.disabled = true;
+    };
+    actionArea.appendChild(voteButton);
+    nextPhaseButton.disabled = true;
+  }
+
+  function lynchPlayer(playerId) {
+    const player = players.find(p => p.id === playerId);
+    if (!player || !player.alive) return;
+    player.alive = false;
+    displayPlayers();
+    // Check if lynched player is Jester
+    if (player.role === 'Jester') {
+      alert('Jester was lynched and wins the game!');
+      gameOver = true;
+      updatePhase();
+    }
+    // Check Cupid linked death
+    if (cupidLinked.includes(playerId)) {
+      const other = cupidLinked.find(id => id !== playerId);
+      if (other) {
+        const otherPlayer = players.find(p => p.id === other);
+        if (otherPlayer && otherPlayer.alive) {
+          otherPlayer.alive = false;
+          alert(`Player ${otherPlayer.id} died because of Cupid's link.`);
+          displayPlayers();
+        }
+      }
+    }
+  }
+
+  function setupNightSpecialRoles() {
+    actionArea.innerHTML = '';
+    // Seer action
+    const seer = players.find(p => p.role === 'Seer' && p.alive);
+    if (seer) {
+      const seerDiv = document.createElement('div');
+      seerDiv.innerHTML = `<h4>Seer: Choose a player to reveal role</h4>`;
+      const select = document.createElement('select');
+      players.forEach(p => {
+        if (p.alive && p.id !== seer.id) {
+          const option = document.createElement('option');
+          option.value = p.id;
+          option.textContent = `Player ${p.id}`;
+          select.appendChild(option);
+        }
+      });
+      seerDiv.appendChild(select);
+      const button = document.createElement('button');
+      button.textContent = 'Reveal Role';
+      button.onclick = () => {
+        const targetId = parseInt(select.value, 10);
+        const target = players.find(p => p.id === targetId);
+        alert(`Player ${target.id} is ${target.role}`);
+        button.disabled = true;
+      };
+      seerDiv.appendChild(button);
+      actionArea.appendChild(seerDiv);
+    }
+
+    // Bodyguard action
+    const bodyguard = players.find(p => p.role === 'Bodyguard' && p.alive);
+    if (bodyguard) {
+      const bgDiv = document.createElement('div');
+      bgDiv.innerHTML = `<h4>Bodyguard: Choose a player to protect</h4>`;
+      const select = document.createElement('select');
+      players.forEach(p => {
+        if (p.alive) {
+          const option = document.createElement('option');
+          option.value = p.id;
+          option.textContent = `Player ${p.id}`;
+          select.appendChild(option);
+        }
+      });
+      bgDiv.appendChild(select);
+      const button = document.createElement('button');
+      button.textContent = 'Protect';
+      button.onclick = () => {
+        bodyguardProtection = parseInt(select.value, 10);
+        alert(`Player ${bodyguardProtection} is protected tonight.`);
+        button.disabled = true;
+      };
+      bgDiv.appendChild(button);
+      actionArea.appendChild(bgDiv);
+    }
+
+    // Hunter action
+    const hunter = players.find(p => p.role === 'Hunter' && p.alive);
+    if (hunter) {
+      const hunterDiv = document.createElement('div');
+      hunterDiv.innerHTML = `<h4>Hunter: Choose a player to target if killed</h4>`;
+      const select = document.createElement('select');
+      players.forEach(p => {
+        if (p.alive && p.id !== hunter.id) {
+          const option = document.createElement('option');
+          option.value = p.id;
+          option.textContent = `Player ${p.id}`;
+          select.appendChild(option);
+        }
+      });
+      hunterDiv.appendChild(select);
+      const button = document.createElement('button');
+      button.textContent = 'Set Target';
+      button.onclick = () => {
+        hunterTarget = parseInt(select.value, 10);
+        alert(`Hunter will target Player ${hunterTarget} if killed.`);
+        button.disabled = true;
+      };
+      hunterDiv.appendChild(button);
+      actionArea.appendChild(hunterDiv);
+    }
+
+    // Spellcaster action
+    const spellcaster = players.find(p => p.role === 'Spellcaster' && p.alive);
+    if (spellcaster) {
+      const spellDiv = document.createElement('div');
+      spellDiv.innerHTML = `<h4>Spellcaster: Choose a player to silence tomorrow</h4>`;
+      const select = document.createElement('select');
+      players.forEach(p => {
+        if (p.alive && p.id !== spellcaster.id) {
+          const option = document.createElement('option');
+          option.value = p.id;
+          option.textContent = `Player ${p.id}`;
+          select.appendChild(option);
+        }
+      });
+      spellDiv.appendChild(select);
+      const button = document.createElement('button');
+      button.textContent = 'Silence';
+      button.onclick = () => {
+        const targetId = parseInt(select.value, 10);
+        const target = players.find(p => p.id === targetId);
+        if (target) {
+          target.silenced = true;
+          alert(`Player ${target.id} will be silenced tomorrow.`);
+          displayPlayers();
+          button.disabled = true;
+        }
+      };
+      spellDiv.appendChild(button);
+      actionArea.appendChild(spellDiv);
+    }
+
+    // Cupid action (only first night)
+    const cupid = players.find(p => p.role === 'Cupid' && p.alive);
+    if (cupid && cupidLinked.length === 0) {
+      const cupidDiv = document.createElement('div');
+      cupidDiv.innerHTML = `<h4>Cupid: Choose 2 players to link</h4>`;
+      const select1 = document.createElement('select');
+      const select2 = document.createElement('select');
+      players.forEach(p => {
+        if (p.alive) {
+          const option1 = document.createElement('option');
+          option1.value = p.id;
+          option1.textContent = `Player ${p.id}`;
+          select1.appendChild(option1);
+          const option2 = document.createElement('option');
+          option2.value = p.id;
+          option2.textContent = `Player ${p.id}`;
+          select2.appendChild(option2);
+        }
+      });
+      cupidDiv.appendChild(select1);
+      cupidDiv.appendChild(select2);
+      const button = document.createElement('button');
+      button.textContent = 'Link Players';
+      button.onclick = () => {
+        const p1 = parseInt(select1.value, 10);
+        const p2 = parseInt(select2.value, 10);
+        if (p1 !== p2) {
+          cupidLinked = [p1, p2];
+          alert(`Players ${p1} and ${p2} are linked by Cupid.`);
+          button.disabled = true;
+        } else {
+          alert('Please select two different players.');
+        }
+      };
+      cupidDiv.appendChild(button);
+      actionArea.appendChild(cupidDiv);
+    }
+  }
+
+  function setupWerewolfKill() {
+    actionArea.innerHTML = '';
+    const werewolves = players.filter(p => p.role === 'Werewolf' && p.alive);
+    if (werewolves.length === 0) {
+      alert('No werewolves alive. Skipping werewolf kill phase.');
+      nextPhaseButton.disabled = false;
+      return;
+    }
+    const killDiv = document.createElement('div');
+    killDiv.innerHTML = `<h4>Werewolves: Choose a player to kill</h4>`;
+    const select = document.createElement('select');
+    players.forEach(p => {
+      if (p.alive && p.role !== 'Werewolf') {
+        const option = document.createElement('option');
+        option.value = p.id;
+        option.textContent = `Player ${p.id}`;
+        select.appendChild(option);
+      }
+    });
+    killDiv.appendChild(select);
+    const button = document.createElement('button');
+    button.textContent = 'Kill';
+    button.onclick = () => {
+      const targetId = parseInt(select.value, 10);
+      werewolfTarget = targetId;
+      alert(`Werewolves chose to kill Player ${targetId}`);
+      button.disabled = true;
+      nextPhaseButton.disabled = false;
+    };
+    killDiv.appendChild(button);
+    actionArea.appendChild(killDiv);
+    nextPhaseButton.disabled = true;
+  }
+
+  function showEndOfTurnSummary() {
+    actionArea.innerHTML = '';
+    // Resolve werewolf kill with bodyguard protection
+    if (werewolfTarget !== null) {
+      if (werewolfTarget === bodyguardProtection) {
+        alert(`Player ${werewolfTarget} was attacked but protected by Bodyguard.`);
+      } else {
+        const victim = players.find(p => p.id === werewolfTarget);
+        if (victim && victim.alive) {
+          victim.alive = false;
+          alert(`Player ${victim.id} was killed by Werewolves.`);
+          // Hunter retaliate
+          if (victim.role === 'Hunter' && hunterTarget !== null) {
+            const target = players.find(p => p.id === hunterTarget);
+            if (target && target.alive) {
+              target.alive = false;
+              alert(`Hunter killed Player ${target.id} in retaliation.`);
+            }
+          }
+          // Cupid linked death
+          if (cupidLinked.includes(victim.id)) {
+            const other = cupidLinked.find(id => id !== victim.id);
+            if (other) {
+              const otherPlayer = players.find(p => p.id === other);
+              if (otherPlayer && otherPlayer.alive) {
+                otherPlayer.alive = false;
+                alert(`Player ${otherPlayer.id} died because of Cupid's link.`);
+              }
+            }
+          }
+        }
+      }
+    }
+    // Reset for next turn
+    werewolfTarget = null;
+    bodyguardProtection = null;
+    hunterTarget = null;
+    // Remove silenced status
+    players.forEach(p => {
+      p.silenced = false;
+    });
+    displayPlayers();
+    checkWinConditions();
+  }
+
+  function checkWinConditions() {
+    if (gameOver) return;
+    const aliveWerewolves = players.filter(p => p.alive && p.role === 'Werewolf').length;
+    const aliveVillagers = players.filter(p => p.alive && p.role !== 'Werewolf').length;
+    if (aliveWerewolves === 0) {
+      alert('Villagers win! All werewolves are dead.');
+      gameOver = true;
+      updatePhase();
+    } else if (aliveWerewolves >= aliveVillagers) {
+      alert('Werewolves win! They have equal or greater numbers than villagers.');
+      gameOver = true;
+      updatePhase();
+    }
+  }
+
+  // New button to show player name inputs
+  const showNamesButton = document.getElementById('showNamesButton');
+  const playerNamesInput = document.getElementById('playerNamesInput');
+  const namesForm = document.getElementById('namesForm');
+  const startButton = document.getElementById('startButton');
+
+  showNamesButton.addEventListener('click', () => {
+    const count = parseInt(playerCountSelect.value, 10);
+    // Clear previous inputs
+    namesForm.innerHTML = '';
+    for (let i = 1; i <= count; i++) {
+      const label = document.createElement('label');
+      label.textContent = `Player ${i} Name: `;
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.name = `playerName${i}`;
+      input.required = true;
+      input.addEventListener('input', () => {
+        // Enable start button only if all inputs have values
+        const allFilled = Array.from(namesForm.elements).every(el => el.value.trim() !== '');
+        startButton.disabled = !allFilled;
+      });
+      label.appendChild(input);
+      namesForm.appendChild(label);
+      namesForm.appendChild(document.createElement('br'));
+    }
+    playerNamesInput.classList.remove('hidden');
+    showNamesButton.disabled = true;
+  });
+
+  startButton.addEventListener('click', () => {
+    const count = parseInt(playerCountSelect.value, 10);
+    // Collect player names
+    const playerNames = [];
+    for (let i = 1; i <= count; i++) {
+      const input = namesForm.elements[`playerName${i}`];
+      playerNames.push(input.value.trim());
+    }
+    assignRoles(count);
+    // Assign names to players
+    players.forEach((player, index) => {
+      player.name = playerNames[index];
+    });
+    displayPlayers();
+    currentPhase = 0;
+    gameOver = false;
+    updatePhase();
+    gameArea.classList.remove('hidden');
+    document.getElementById('startArea').classList.add('hidden');
+    startButton.disabled = true;
+    nextPhaseButton.classList.remove('hidden');
+  });
+  
+  function displayPlayers() {
+    playerListDiv.innerHTML = '<h3>Players</h3>';
+    players.forEach(player => {
+      const p = document.createElement('div');
+      p.className = 'player ' + (player.alive ? 'alive' : 'dead');
+      const displayName = player.name ? player.name : `Player ${player.id}`;
+      p.textContent = `${displayName} - ${player.role}` + (player.silenced ? ' (Silenced)' : '');
+      playerListDiv.appendChild(p);
+    });
+  }
+
+  nextPhaseButton.addEventListener('click', () => {
+    if (gameOver) {
+      // Restart game
+      currentPhase = 0;
+      gameOver = false;
+      gameArea.classList.add('hidden');
+      document.getElementById('startArea').classList.remove('hidden');
+      playerListDiv.innerHTML = '';
+      actionArea.innerHTML = '';
+      phaseInfo.textContent = '';
+      startButton.disabled = false;
+      nextPhaseButton.classList.add('hidden');
+      cupidLinked = [];
+      bodyguardProtection = null;
+      hunterTarget = null;
+      werewolfTarget = null;
+      jesterVotes = {};
+      return;
+    }
+    currentPhase++;
+    if (currentPhase >= phases.length) {
+      currentPhase = 0;
+    }
+    updatePhase();
+  });
+</script>
+</body>
+</html>
