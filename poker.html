@@ -298,10 +298,6 @@
           } else if (target.classList.contains('all-in') && gamePhase === 'raising') {
             placeBet('all-in', playerIndex);
           }
-          // Removed reset-chips button handler
-          // else if (target.classList.contains('reset-chips') && gamePhase === 'raising') {
-          //   confirmResetChips(playerIndex);
-          // }
         }
       });
     });
@@ -388,14 +384,6 @@
       allInBtn.disabled = player.chips === 0 || gamePhase !== 'raising';
       betControls.appendChild(allInBtn);
 
-      // Reset button
-      // const resetBtn = document.createElement('button');
-      // resetBtn.textContent = 'Reset';
-      // resetBtn.title = 'Reset chips to starting amount';
-      // resetBtn.classList.add('reset-chips');
-      // resetBtn.disabled = player.chips === player.startingChips || gamePhase !== 'raising';
-      // betControls.appendChild(resetBtn);
-
       div.appendChild(betControls);
 
       return div;
@@ -418,8 +406,6 @@
         playersContainer.appendChild(playerEl);
       });
       potAmountSpan.textContent = pot;
-    // roundWinnerBtn.disabled = gamePhase !== 'winning' || pot === 0;
-    // updateCallAmount(callAmount);
     }
 
     // Start the game with selected number of players and starting chips
