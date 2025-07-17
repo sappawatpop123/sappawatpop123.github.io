@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Spinning Arrow Roulette</title>
+<link rel="icon" href="images/wheel-icon.png">
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #0b0c0f, #1a1a1a);
+    color: #f0e6d2;
+    margin: 40px;
+    text-align: center;
+  }
+  #rouletteContainer {
+    margin: 20px auto 0 auto;
+    width: 300px;
+    height: 300px;
+    position: relative;
+  }
+  #roulette {
+    width: 300px;
+    margin-top: 100px;
+    margin-bottom: 100px;
+    height: 300px;
+    border: 10px solid #660000;
+    border-radius: 50%;
+    background: conic-gradient(
+      #ff4c4c 0deg 45deg,
+      #990000 45deg 90deg,
+      #ff4c4c 90deg 135deg,
+      #990000 135deg 180deg,
+      #ff4c4c 180deg 225deg,
+      #990000 225deg 270deg,
+      #ff4c4c 270deg 315deg,
+      #990000 315deg 360deg
+    );
+    box-shadow: 0 0 20px #ff0000;
+    transition: transform 4s cubic-bezier(0.33, 1, 0.68, 1);
+  }
+  #arrow {
+    width: 0;
+    height: 0;
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
+    border-bottom: 40px solid #ff0000;
+    position: absolute;
+    top: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    filter: drop-shadow(0 0 5px #ff0000);
+  }
+  #spinButton {
+    margin-top: 20px;
+    padding: 10px 30px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    border-radius: 30px;
+    border: none;
+    background: linear-gradient(145deg, #660000, #990000);
+    color: #f0e6d2;
+    cursor: pointer;
+    box-shadow: 0 0 15px #ff0000;
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+  }
+  #spinButton:hover, #spinButton:focus {
+    background: linear-gradient(145deg, #ff0000, #cc0000);
+    box-shadow: 0 0 25px #ff4c4c;
+    outline: none;
+  }
+</style>
+</head>
+<body>
+<h1>Spinning Arrow Roulette</h1>
+<div id="rouletteContainer">
+  <div id="roulette">
+    <div id="arrow"></div>
+  </div>
+  <button id="spinButton">Spin</button>
+</div>
+<script>
+  const spinButton = document.getElementById('spinButton');
+  const roulette = document.getElementById('roulette');
+  let spinning = false;
+
+  spinButton.addEventListener('click', () => {
+    if (spinning) return;
+    spinning = true;
+    spinButton.disabled = true;
+
+    // Random spin degrees between 2000 and 4000 for multiple rotations
+    const randomDegrees = Math.floor(Math.random() * 2000) + 2000;
+    // Use randomDegrees directly without offset to allow stopping at varied degrees
+    const finalRotation = randomDegrees;
+
+    roulette.style.transition = 'transform 4s cubic-bezier(0.33, 1, 0.68, 1)';
+    roulette.style.transform = `rotate(${finalRotation}deg)`;
+
+    roulette.addEventListener('transitionend', () => {
+      spinning = false;
+      spinButton.disabled = false;
+      // Normalize rotation to 0-360 degrees
+      const normalizedRotation = finalRotation % 360;
+      alert(`Roulette stopped at ${Math.round(normalizedRotation)} degrees.`);
+    }, { once: true });
+  });
+</script>
+</body>
+</html>
