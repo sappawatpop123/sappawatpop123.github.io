@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PSMD Colour Assessment</title>
+<link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&family=Pacifico&display=swap" rel="stylesheet" />
+<style>
+  body {
+    font-family: 'Comic Neue', cursive, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-image: url('images/personality-bg.png');
+    color: #222;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    margin: 0;
+    min-height: 100vh;
+  }
+  h1 {
+    margin-bottom: 20px;
+    color: #6a0572;
+    text-shadow: 1px 1px 2px #f0a6ca;
+    font-family: 'Pacifico', cursive;
+    font-size: 3rem;
+    letter-spacing: 2px;
+  }
+  form {
+    max-width: 700px;
+    width: 100%;
+    background: #fff0f6;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(255, 105, 180, 0.4);
+    border: 2px solid #d81e5b;
+  }
+  .question {
+    margin-bottom: 20px;
+  }
+  .question label {
+    display: block;
+    margin-bottom: 6px;
+    color: #6a0572;
+  }
+  .scale-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    margin-bottom: 6px;
+    color: #a64ca6;
+  }
+  .options {
+    display: flex;
+    justify-content: space-between;
+  }
+  .options label {
+    flex: 1;
+    text-align: center;
+    font-size: 0.9rem;
+    cursor: pointer;
+    color: #6a0572;
+  }
+  .options input[type="radio"] {
+    display: none;
+  }
+  .options input[type="radio"] + span {
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    line-height: 28px;
+    border-radius: 50%;
+    background: #d8bfd8;
+    color: #6a0572;
+    user-select: none;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  .options input[type="radio"]:checked + span {
+    background: #d81e5b;
+    color: white;
+    font-weight: bold;
+  }
+  button {
+    background: #d81e5b;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-top: 10px;
+    box-shadow: 0 4px 12px rgba(216, 30, 91, 0.6);
+    transition: background-color 0.3s ease;
+  }
+  button:hover {
+    background: #a10f3a;
+  }
+  #result {
+    margin-top: 30px;
+    max-width: 700px;
+    width: 100%;
+    background: #fff0f6;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(255, 105, 180, 0.4);
+    text-align: center;
+    color: #6a0572;
+  }
+  #chart {
+    margin-top: 20px;
+    width: 400px;
+    height: 400px;
+    background: #fce4ec;
+    border-radius: 12px;
+    position: relative;
+    box-shadow: 0 8px 24px rgba(255, 105, 180, 0.4);
+  }
+  /* Quadrant colors */
+  #chart .quadrant {
+    position: absolute;
+    width: 50%;
+    height: 50%;
+    opacity: 0.5;
+  }
+  #chart .top-left {
+    top: 0;
+    left: 0;
+    background: #3e18f7; /* Wisdom: Introvert + Serious */
+  }
+  #chart .top-right {
+    top: 0;
+    right: 0;
+    background: #ff9320; /* Creativity: Extrovert + Serious */
+  }
+  #chart .bottom-left {
+    bottom: 0;
+    left: 0;
+    background: #2ccc08; /* Harmony: Introvert + Chill */
+  }
+  #chart .bottom-right {
+    bottom: 0;
+    right: 0;
+    background: #fff535; /* Happiness: Extrovert + Chill */
+  }
+  /* Axis lines */
+  #chart .axis {
+    position: absolute;
+    background: #6a0572;
+  }
+  #chart .axis.x {
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    transform: translateY(-50%);
+  }
+  #chart .axis.y {
+    left: 50%;
+    top: 0;
+    width: 2px;
+    height: 100%;
+    transform: translateX(-50%);
+  }
+  /* User position dot */
+  #userDot {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 3px solid #d81e5b;
+    background: rgba(216, 30, 91, 0.8);
+    transform: translate(-50%, -50%);
+  }
+  /* Labels */
+  #chart .label {
+    position: absolute;
+    font-weight: bold;
+    color: #6a0572;
+    user-select: none;
+  }
+  #chart .label.top {
+    top: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  #chart .label.bottom {
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  #chart .label.left {
+    left: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  #chart .label.right {
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+</style>
+</head>
+<body>
+  <h1>PSMD Colour Assessment</h1>
+  <form id="personalityForm" aria-label="Personality test questions">
+    <div class="question" role="radiogroup" aria-labelledby="q1-label">
+      <label id="q1-label">1. I prefer quiet time alone rather than social gatherings.</label>
+      <div class="scale-labels">
+        <span>Strongly Disagree</span><span>Neutral</span><span>Strongly Agree</span>
+      </div>
+      <div class="options">
+        <label><input type="radio" name="q1" value="1" required><span>1</span></label>
+        <label><input type="radio" name="q1" value="2"><span>2</span></label>
+        <label><input type="radio" name="q1" value="3"><span>3</span></label>
+        <label><input type="radio" name="q1" value="4"><span>4</span></label>
+        <label><input type="radio" name="q1" value="5"><span>5</span></label>
+        <label><input type="radio" name="q1" value="6"><span>6</span></label>
+        <label><input type="radio" name="q1" value="7"><span>7</span></label>
+      </div>
+    </div>
+    <div class="question" role="radiogroup" aria-labelledby="q2-label">
+      <label id="q2-label">2. I like to plan things carefully and stick to my plans.</label>
+      <div class="scale-labels">
+        <span>Strongly Disagree</span><span>Neutral</span><span>Strongly Agree</span>
+      </div>
+      <div class="options">
+        <label><input type="radio" name="q2" value="1" required><span>1</span></label>
+        <label><input type="radio" name="q2" value="2"><span>2</span></label>
+        <label><input type="radio" name="q2" value="3"><span>3</span></label>
+        <label><input type="radio" name="q2" value="4"><span>4</span></label>
+        <label><input type="radio" name="q2" value="5"><span>5</span></label>
+        <label><input type="radio" name="q2" value="6"><span>6</span></label>
+        <label><input type="radio" name="q2" value="7"><span>7</span></label>
+      </div>
+    </div>
+    <div class="question" role="radiogroup" aria-labelledby="q3-label">
+      <label id="q3-label">3. I enjoy meeting new people and being the center of attention.</label>
+      <div class="scale-labels">
+        <span>Strongly Disagree</span><span>Neutral</span><span>Strongly Agree</span>
+      </div>
+      <div class="options">
+        <label><input type="radio" name="q3" value="1" required><span>1</span></label>
+        <label><input type="radio" name="q3" value="2"><span>2</span></label>
+        <label><input type="radio" name="q3" value="3"><span>3</span></label>
+        <label><input type="radio" name="q3" value="4"><span>4</span></label>
+        <label><input type="radio" name="q3" value="5"><span>5</span></label>
+        <label><input type="radio" name="q3" value="6"><span>6</span></label>
+        <label><input type="radio" name="q3" value="7"><span>7</span></label>
+      </div>
+    </div>
+    <div class="question" role="radiogroup" aria-labelledby="q4-label">
+      <label id="q4-label">4. I often take things lightly and prefer to go with the flow.</label>
+      <div class="scale-labels">
+        <span>Strongly Disagree</span><span>Neutral</span><span>Strongly Agree</span>
+      </div>
+      <div class="options">
+        <label><input type="radio" name="q4" value="1" required><span>1</span></label>
+        <label><input type="radio" name="q4" value="2"><span>2</span></label>
+        <label><input type="radio" name="q4" value="3"><span>3</span></label>
+        <label><input type="radio" name="q4" value="4"><span>4</span></label>
+        <label><input type="radio" name="q4" value="5"><span>5</span></label>
+        <label><input type="radio" name="q4" value="6"><span>6</span></label>
+        <label><input type="radio" name="q4" value="7"><span>7</span></label>
+      </div>
+    </div>
+    <div class="question" role="radiogroup" aria-labelledby="q5-label">
+      <label id="q5-label">5. I prefer deep, meaningful conversations over small talk.</label>
+      <div class="scale-labels">
+        <span>Strongly Disagree</span><span>Neutral</span><span>Strongly Agree</span>
+      </div>
+      <div class="options">
+        <label><input type="radio" name="q5" value="1" required><span>1</span></label>
+        <label><input type="radio" name="q5" value="2"><span>2</span></label>
+        <label><input type="radio" name="q5" value="3"><span>3</span></label>
+        <label><input type="radio" name="q5" value="4"><span>4</span></label>
+        <label><input type="radio" name="q5" value="5"><span>5</span></label>
+        <label><input type="radio" name="q5" value="6"><span>6</span></label>
+        <label><input type="radio" name="q5" value="7"><span>7</span></label>
+      </div>
+    </div>
+    <div class="question" role="radiogroup" aria-labelledby="q6-label">
+      <label id="q6-label">6. I am more productive when I have a clear plan and structure.</label>
+      <div class="scale-labels">
+        <span>Strongly Disagree</span><span>Neutral</span><span>Strongly Agree</span>
+      </div>
+      <div class="options">
+        <label><input type="radio" name="q6" value="1" required><span>1</span></label>
+        <label><input type="radio" name="q6" value="2"><span>2</span></label>
+        <label><input type="radio" name="q6" value="3"><span>3</span></label>
+        <label><input type="radio" name="q6" value="4"><span>4</span></label>
+        <label><input type="radio" name="q6" value="5"><span>5</span></label>
+        <label><input type="radio" name="q6" value="6"><span>6</span></label>
+        <label><input type="radio" name="q6" value="7"><span>7</span></label>
+      </div>
+    </div>
+    <div class="question" role="radiogroup" aria-labelledby="q7-label">
+      <label id="q7-label">7. I enjoy being in large groups and social events.</label>
+      <div class="scale-labels">
+        <span>Strongly Disagree</span><span>Neutral</span><span>Strongly Agree</span>
+      </div>
+      <div class="options">
+        <label><input type="radio" name="q7" value="1" required><span>1</span></label>
+        <label><input type="radio" name="q7" value="2"><span>2</span></label>
+        <label><input type="radio" name="q7" value="3"><span>3</span></label>
+        <label><input type="radio" name="q7" value="4"><span>4</span></label>
+        <label><input type="radio" name="q7" value="5"><span>5</span></label>
+        <label><input type="radio" name="q7" value="6"><span>6</span></label>
+        <label><input type="radio" name="q7" value="7"><span>7</span></label>
+      </div>
+    </div>
+    <div class="question" role="radiogroup" aria-labelledby="q8-label">
+      <label id="q8-label">8. I tend to stay calm and relaxed even in stressful situations.</label>
+      <div class="scale-labels">
+        <span>Strongly Disagree</span><span>Neutral</span><span>Strongly Agree</span>
+      </div>
+      <div class="options">
+        <label><input type="radio" name="q8" value="1" required><span>1</span></label>
+        <label><input type="radio" name="q8" value="2"><span>2</span></label>
+        <label><input type="radio" name="q8" value="3"><span>3</span></label>
+        <label><input type="radio" name="q8" value="4"><span>4</span></label>
+        <label><input type="radio" name="q8" value="5"><span>5</span></label>
+        <label><input type="radio" name="q8" value="6"><span>6</span></label>
+        <label><input type="radio" name="q8" value="7"><span>7</span></label>
+      </div>
+    </div>
+    <div class="question" role="radiogroup" aria-labelledby="q9-label">
+      <label id="q9-label">9. I prefer to listen rather than speak in group discussions.</label>
+      <div class="scale-labels">
+        <span>Strongly Disagree</span><span>Neutral</span><span>Strongly Agree</span>
+      </div>
+      <div class="options">
+        <label><input type="radio" name="q9" value="1" required><span>1</span></label>
+        <label><input type="radio" name="q9" value="2"><span>2</span></label>
+        <label><input type="radio" name="q9" value="3"><span>3</span></label>
+        <label><input type="radio" name="q9" value="4"><span>4</span></label>
+        <label><input type="radio" name="q9" value="5"><span>5</span></label>
+        <label><input type="radio" name="q9" value="6"><span>6</span></label>
+        <label><input type="radio" name="q9" value="7"><span>7</span></label>
+      </div>
+    </div>
+    <div class="question" role="radiogroup" aria-labelledby="q10-label">
+      <label id="q10-label">10. I feel comfortable taking charge and making decisions.</label>
+      <div class="scale-labels">
+        <span>Strongly Disagree</span><span>Neutral</span><span>Strongly Agree</span>
+      </div>
+      <div class="options">
+        <label><input type="radio" name="q10" value="1" required><span>1</span></label>
+        <label><input type="radio" name="q10" value="2"><span>2</span></label>
+        <label><input type="radio" name="q10" value="3"><span>3</span></label>
+        <label><input type="radio" name="q10" value="4"><span>4</span></label>
+        <label><input type="radio" name="q10" value="5"><span>5</span></label>
+        <label><input type="radio" name="q10" value="6"><span>6</span></label>
+        <label><input type="radio" name="q10" value="7"><span>7</span></label>
+      </div>
+    </div>
+    <div class="question" role="radiogroup" aria-labelledby="q11-label">
+      <label id="q11-label">11. I prefer to keep my environment organized and tidy.</label>
+      <div class="scale-labels">
+        <span>Strongly Disagree</span><span>Neutral</span><span>Strongly Agree</span>
+      </div>
+      <div class="options">
+        <label><input type="radio" name="q11" value="1" required><span>1</span></label>
+        <label><input type="radio" name="q11" value="2"><span>2</span></label>
+        <label><input type="radio" name="q11" value="3"><span>3</span></label>
+        <label><input type="radio" name="q11" value="4"><span>4</span></label>
+        <label><input type="radio" name="q11" value="5"><span>5</span></label>
+        <label><input type="radio" name="q11" value="6"><span>6</span></label>
+        <label><input type="radio" name="q11" value="7"><span>7</span></label>
+      </div>
+    </div>
+    <div class="question" role="radiogroup" aria-labelledby="q12-label">
+      <label id="q12-label">12. I enjoy spontaneous adventures and trying new things.</label>
+      <div class="scale-labels">
+        <span>Strongly Disagree</span><span>Neutral</span><span>Strongly Agree</span>
+      </div>
+      <div class="options">
+        <label><input type="radio" name="q12" value="1" required><span>1</span></label>
+        <label><input type="radio" name="q12" value="2"><span>2</span></label>
+        <label><input type="radio" name="q12" value="3"><span>3</span></label>
+        <label><input type="radio" name="q12" value="4"><span>4</span></label>
+        <label><input type="radio" name="q12" value="5"><span>5</span></label>
+        <label><input type="radio" name="q12" value="6"><span>6</span></label>
+        <label><input type="radio" name="q12" value="7"><span>7</span></label>
+      </div>
+    </div>
+    <div class="question" role="radiogroup" aria-labelledby="q13-label">
+      <label id="q13-label">13. I am comfortable adapting to changes in plans.</label>
+      <div class="scale-labels">
+        <span>Strongly Disagree</span><span>Neutral</span><span>Strongly Agree</span>
+      </div>
+      <div class="options">
+        <label><input type="radio" name="q13" value="1" required><span>1</span></label>
+        <label><input type="radio" name="q13" value="2"><span>2</span></label>
+        <label><input type="radio" name="q13" value="3"><span>3</span></label>
+        <label><input type="radio" name="q13" value="4"><span>4</span></label>
+        <label><input type="radio" name="q13" value="5"><span>5</span></label>
+        <label><input type="radio" name="q13" value="6"><span>6</span></label>
+        <label><input type="radio" name="q13" value="7"><span>7</span></label>
+      </div>
+    </div>
+    <div class="question" role="radiogroup" aria-labelledby="q14-label">
+      <label id="q14-label">14. I enjoy working on creative projects that require focus.</label>
+      <div class="scale-labels">
+        <span>Strongly Disagree</span><span>Neutral</span><span>Strongly Agree</span>
+      </div>
+      <div class="options">
+        <label><input type="radio" name="q14" value="1" required><span>1</span></label>
+        <label><input type="radio" name="q14" value="2"><span>2</span></label>
+        <label><input type="radio" name="q14" value="3"><span>3</span></label>
+        <label><input type="radio" name="q14" value="4"><span>4</span></label>
+        <label><input type="radio" name="q14" value="5"><span>5</span></label>
+        <label><input type="radio" name="q14" value="6"><span>6</span></label>
+        <label><input type="radio" name="q14" value="7"><span>7</span></label>
+      </div>
+    </div>
+    <div class="question" role="radiogroup" aria-labelledby="q15-label">
+      <label id="q15-label">15. I prefer to avoid conflicts and maintain harmony.</label>
+      <div class="scale-labels">
+        <span>Strongly Disagree</span><span>Neutral</span><span>Strongly Agree</span>
+      </div>
+      <div class="options">
+        <label><input type="radio" name="q15" value="1" required><span>1</span></label>
+        <label><input type="radio" name="q15" value="2"><span>2</span></label>
+        <label><input type="radio" name="q15" value="3"><span>3</span></label>
+        <label><input type="radio" name="q15" value="4"><span>4</span></label>
+        <label><input type="radio" name="q15" value="5"><span>5</span></label>
+        <label><input type="radio" name="q15" value="6"><span>6</span></label>
+        <label><input type="radio" name="q15" value="7"><span>7</span></label>
+      </div>
+    </div>
+    <div class="question" role="radiogroup" aria-labelledby="q16-label">
+      <label id="q16-label">16. I am energized by social interactions and group activities.</label>
+      <div class="scale-labels">
+        <span>Strongly Disagree</span><span>Neutral</span><span>Strongly Agree</span>
+      </div>
+      <div class="options">
+        <label><input type="radio" name="q16" value="1" required><span>1</span></label>
+        <label><input type="radio" name="q16" value="2"><span>2</span></label>
+        <label><input type="radio" name="q16" value="3"><span>3</span></label>
+        <label><input type="radio" name="q16" value="4"><span>4</span></label>
+        <label><input type="radio" name="q16" value="5"><span>5</span></label>
+        <label><input type="radio" name="q16" value="6"><span>6</span></label>
+        <label><input type="radio" name="q16" value="7"><span>7</span></label>
+      </div>
+    </div>
+    <button type="submit">See My Personality</button>
+  </form>
+
+  <div id="result" aria-live="polite" aria-atomic="true" hidden>
+    <h2>Your Personality Result</h2>
+    <p id="personalityType"></p>
+    <div id="chart" role="img" aria-label="Personality chart with seriousness and -verting axes">
+      <div class="quadrant top-left"></div>
+      <div class="quadrant top-right"></div>
+      <div class="quadrant bottom-left"></div>
+      <div class="quadrant bottom-right"></div>
+      <div class="axis x"></div>
+      <div class="axis y"></div>
+      <div id="userDot" title="Your position"></div>
+      <div class="label top">Serious</div>
+      <div class="label bottom">Chill</div>
+      <div class="label left">Introvert</div>
+      <div class="label right">Extrovert</div>
+    </div>
+  </div>
+
+<script>
+  const form = document.getElementById('personalityForm');
+  const resultDiv = document.getElementById('result');
+  const personalityTypeEl = document.getElementById('personalityType');
+  const userDot = document.getElementById('userDot');
+
+  // Questions mapping to axes and polarity
+  // Each question has axis: 'vert' or 'serious'
+  // polarity: 1 means higher value means more extrovert/serious, -1 means reverse
+  const questions = {
+    q1: { axis: 'vert', polarity: -1 }, // I prefer quiet time alone (introvert)
+    q2: { axis: 'serious', polarity: 1 }, // I like to plan things carefully
+    q3: { axis: 'vert', polarity: 1 }, // I enjoy meeting new people
+    q4: { axis: 'serious', polarity: -1 }, // I take things lightly (chill)
+    q5: { axis: 'vert', polarity: -1 }, // I prefer deep conversations (introvert)
+    q6: { axis: 'serious', polarity: 1 }, // I am productive with plans
+    q7: { axis: 'vert', polarity: 1 }, // I enjoy large groups
+    q8: { axis: 'serious', polarity: -1 }, // I stay calm and relaxed (chill)
+    q9: { axis: 'vert', polarity: -1 }, // I prefer to listen rather than speak
+    q10: { axis: 'vert', polarity: 1 }, // I feel comfortable taking charge
+    q11: { axis: 'serious', polarity: 1 }, // I prefer organized environment
+    q12: { axis: 'vert', polarity: 1 }, // I enjoy spontaneous adventures
+    q13: { axis: 'serious', polarity: -1 }, // I am comfortable adapting to changes
+    q14: { axis: 'serious', polarity: 1 }, // I enjoy creative projects
+    q15: { axis: 'serious', polarity: -1 }, // I prefer to avoid conflicts
+    q16: { axis: 'vert', polarity: 1 } // I am energized by social interactions
+  };
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    let vertScore = 0;
+    let seriousScore = 0;
+    let vertCount = 0;
+    let seriousCount = 0;
+
+    for (const [q, { axis, polarity }] of Object.entries(questions)) {
+      const val = parseInt(form[q].value);
+      // Adjust val to range -3 to +3 (7-point scale centered at 4)
+      const adjusted = (val - 4) * polarity;
+      if (axis === 'vert') {
+        vertScore += adjusted;
+        vertCount++;
+      } else if (axis === 'serious') {
+        seriousScore += adjusted;
+        seriousCount++;
+      }
+    }
+
+    // Normalize scores to 0-100 scale
+    // Max absolute score per axis = 3 * number of questions on that axis
+    const vertMax = vertCount * 3;
+    const seriousMax = seriousCount * 3;
+
+    const vertPercent = ((vertScore + vertMax) / (2 * vertMax)) * 100;
+    const seriousPercent = ((seriousScore + seriousMax) / (2 * seriousMax)) * 100;
+
+    // Determine personality type
+    let personality = '';
+    if (vertPercent <= 50 && seriousPercent >= 50) personality = 'Wisdom (Blue): Introvert + Serious';
+    else if (vertPercent > 50 && seriousPercent < 50) personality = 'Happiness (Yellow): Extrovert + Chill';
+    else if (vertPercent <= 50 && seriousPercent < 50) personality = 'Harmony (Green): Introvert + Chill';
+    else if (vertPercent > 50 && seriousPercent >= 50) personality = 'Creativity (Orange): Extrovert + Serious';
+
+    personalityTypeEl.textContent = personality;
+
+    // Position userDot on chart
+    userDot.style.left = vertPercent + '%';
+    userDot.style.top = (100 - seriousPercent) + '%';
+
+    // Show result
+    resultDiv.hidden = false;
+
+    // Scroll to result
+    resultDiv.scrollIntoView({ behavior: 'smooth' });
+  });
+</script>
+</body>
+</html>

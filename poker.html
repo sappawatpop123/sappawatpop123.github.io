@@ -69,6 +69,12 @@
   button:hover {
     background: radial-gradient(circle at center, #f0d86a 0%, #d4af37 80%);
   }
+  #nextRoundBtn:disabled {
+    background: grey !important;
+    color: #999 !important;
+    cursor: not-allowed !important;
+    box-shadow: none !important;
+  }
   .table-container {
     position: relative;
     width: 90vw;
@@ -103,6 +109,11 @@
     pointer-events: auto;
     user-select: none;
     transition: box-shadow 0.3s ease, background 0.3s ease;
+  }
+  .player.bankrupt {
+    background: #555 !important;
+    color: #999 !important;
+    box-shadow: none !important;
   }
   .player.current-turn {
     box-shadow: 0 0 25px 6px #f0d86a;
@@ -215,7 +226,6 @@
     </div>
   </div>
 
-  <!-- Modal for choosing winner -->
   <div id="chooseWinnerModal" style="display:none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;">
     <div style="background: #0b3d0b; border-radius: 12px; padding: 1rem 2rem; max-width: 300px; width: 90%; color: #f0e6d2; text-align: center; box-shadow: 0 0 15px #d4af37;">
       <h2>Choose The Winner</h2>
@@ -231,23 +241,18 @@
   </div>
 
   <script>
-    // Roles for players in order
     const roles = ['Dealer', 'Small Blind', 'Big Blind', 'Player'];
 
-    // Game state variables
     let players = [];
     let currentTurnIndex = 0;
     let pot = 0;
-    // let callAmount = 0;
-    let gamePhase = 'raising'; // 'raising', 'winning', 'nextRound'
+    let gamePhase = 'raising';
 
-    // DOM elements
     let numPlayersSelect;
     let startingChipsInput;
     let startGameBtn;
     let playersContainer;
     let potAmountSpan;
-    // let callAmountSpan;
     let startPage;
     let gamePage;
     let chooseWinnerBtn;
@@ -256,14 +261,12 @@
     let confirmWinnerBtn;
     let cancelWinnerBtn;
 
-    // Initialize DOM references and event listeners after DOM content loaded
     document.addEventListener('DOMContentLoaded', () => {
       numPlayersSelect = document.getElementById('numPlayers');
       startingChipsInput = document.getElementById('startingChips');
       startGameBtn = document.getElementById('startGameBtn');
       playersContainer = document.getElementById('playersContainer');
       potAmountSpan = document.getElementById('potAmount');
-      // callAmountSpan = document.getElementById('callAmount');
       startPage = document.getElementById('startPage');
       gamePage = document.getElementById('gamePage');
       chooseWinnerBtn = document.getElementById('chooseWinnerBtn');
@@ -277,17 +280,14 @@
       confirmWinnerBtn.addEventListener('click', confirmChooseWinner);
       cancelWinnerBtn.addEventListener('click', closeChooseWinnerModal);
 
-      // Add event listener for next round button
       const nextRoundBtn = document.getElementById('nextRoundBtn');
       nextRoundBtn.addEventListener('click', () => {
         startNextRoundWithDealerCycle();
       });
 
-      // Use event delegation for betting buttons inside playersContainer
       playersContainer.addEventListener('click', (event) => {
         const target = event.target;
         if (target.tagName === 'BUTTON') {
-          // Find the player index from the clicked button's parent player div
           let playerDiv = target.closest('.player');
           if (!playerDiv) return;
           const playerIndex = Array.from(playersContainer.children).indexOf(playerDiv);
@@ -303,31 +303,32 @@
       });
     });
 
-    // Create player element with controls and position
-    function createPlayerElement(player, index, totalPlayers) {
+  function createPlayerElement(player, index, totalPlayers) {
       const div = document.createElement('div');
       div.classList.add('player');
-      if (index === currentTurnIndex && gamePhase === 'raising') {
+    if (index === currentTurnIndex && gamePhase === 'raising') {
         div.classList.add('current-turn');
         div.setAttribute('aria-current', 'true');
       } else {
         div.removeAttribute('aria-current');
       }
 
-      // Position players in a circle
+      if (player.bankrupt) {
+        div.classList.add('bankrupt');
+      }
+
       let angleOffset = Math.PI / 2;
       if (totalPlayers === 7) {
-        angleOffset = Math.PI / 2.5; // Increase angle offset for 7 players to lower player 1 position more
+        angleOffset = Math.PI / 2.5;
       }
       const angle = (index / totalPlayers) * 2 * Math.PI - angleOffset;
-      // Dynamically adjust radius based on number of players
-      let radius = 38; // default radius
+      let radius = 38;
       if (totalPlayers >= 5 && totalPlayers <= 6) {
-        radius = 50; // increase radius for 5 and 6 players to space them farther apart
+        radius = 50;
       } else if (totalPlayers === 7) {
-        radius = 55; // reduce radius slightly for 7 players to bring players nearer
+        radius = 55;
       } else if (totalPlayers === 8) {
-        radius = 50; // increase radius for 8 players to space them farther apart
+        radius = 50;
       }
       const x = 50 + radius * Math.cos(angle);
       const y = 50 + radius * Math.sin(angle);
@@ -335,38 +336,31 @@
       div.style.top = y + '%';
       div.style.transform = 'translate(-50%, -50%)';
 
-      // Determine role based on current turn
       const roleIndex = getRoleIndex(index);
       const role = roles[roleIndex] || 'Player';
 
-      // Role display
       const roleDiv = document.createElement('div');
       roleDiv.classList.add('role');
       roleDiv.textContent = role;
       div.appendChild(roleDiv);
 
-      // Player name
       const nameDiv = document.createElement('div');
       nameDiv.textContent = `Player ${index + 1}`;
       div.appendChild(nameDiv);
 
-      // Chip count display
       const chipCountDiv = document.createElement('div');
       chipCountDiv.classList.add('chip-count');
       chipCountDiv.textContent = player.chips;
       div.appendChild(chipCountDiv);
 
-      // Raised amount display
       const raisedAmountDiv = document.createElement('div');
       raisedAmountDiv.classList.add('raised-amount');
       raisedAmountDiv.textContent = `Raised: ${player.currentBet}`;
       div.appendChild(raisedAmountDiv);
 
-      // Betting controls container
       const betControls = document.createElement('div');
       betControls.classList.add('chip-controls');
 
-      // Betting buttons for fixed values
       const betValues = [10, 50, 100, 500];
       betValues.forEach(value => {
         const btn = document.createElement('button');
@@ -377,7 +371,6 @@
         betControls.appendChild(btn);
       });
 
-      // All-in button
       const allInBtn = document.createElement('button');
       allInBtn.textContent = 'All-In';
       allInBtn.title = 'Bet all chips';
@@ -390,16 +383,76 @@
       return div;
     }
 
-    // Get role index based on player position relative to current turn
-    function getRoleIndex(playerIndex) {
-      const relativeIndex = (playerIndex - currentTurnIndex + players.length) % players.length;
-      if (relativeIndex === 0) return 0; // Dealer
-      if (relativeIndex === 1) return 1; // Small Blind
-      if (relativeIndex === 2) return 2; // Big Blind
-      return 3; // Player
+function getRoleIndex(playerIndex) {
+    // We need to assign roles skipping bankrupt players
+    // Create an array of valid player indices starting from currentTurnIndex
+    const validPlayers = [];
+    const totalPlayers = players.length;
+    let count = 0;
+    let idx = currentTurnIndex;
+    while (count < totalPlayers) {
+      if (players[idx].chips > 0) {
+        validPlayers.push(idx);
+      }
+      idx = (idx + 1) % totalPlayers;
+      count++;
     }
+    // Find the position of playerIndex in validPlayers
+    const pos = validPlayers.indexOf(playerIndex);
+    if (pos === -1) {
+      // Player is bankrupt, assign role 'Player' (index 3)
+      return 3;
+    }
+    if (pos === 0) return 0; // Dealer
+    if (pos === 1) return 1; // Small Blind
+    if (pos === 2) return 2; // Big Blind
+    return 3; // Player
+  }
+  
+  // Helper function to get next valid player index skipping bankrupt players
+  function getNextValidPlayerIndex(startIndex) {
+    let nextIndex = startIndex;
+    const totalPlayers = players.length;
+    for (let i = 0; i < totalPlayers; i++) {
+      if (players[nextIndex].chips > 0) {
+        return nextIndex;
+      }
+      nextIndex = (nextIndex + 1) % totalPlayers;
+    }
+    return -1; // All players bankrupt or no valid player
+  }
+  
+  // Move to the next player's turn skipping bankrupt players
+  function nextTurn() {
+    let nextIndex = (currentTurnIndex + 1) % players.length;
+    nextIndex = getNextValidPlayerIndex(nextIndex);
+    if (nextIndex !== -1) {
+      currentTurnIndex = nextIndex;
+    }
+    renderPlayers();
+  }
+  
+  // Start the next round with dealer cycle skipping bankrupt players
+  function startNextRoundWithDealerCycle() {
+    pot = 0;
+    callAmount = 0;
+    // Reset current bets for all players
+    players.forEach(player => {
+      player.currentBet = 0;
+      // Update bankrupt status here
+      player.bankrupt = player.chips === 0;
+    });
+    // Advance dealer to next valid player
+    let nextIndex = (currentTurnIndex + 1) % players.length;
+    nextIndex = getNextValidPlayerIndex(nextIndex);
+    if (nextIndex !== -1) {
+      currentTurnIndex = nextIndex;
+    }
+    gamePhase = 'raising';
+    renderPlayers();
+    updateNextRoundButtonState();
+  }
 
-    // Render all players on the table
     function renderPlayers() {
       playersContainer.innerHTML = '';
       players.forEach((player, index) => {
@@ -407,16 +460,16 @@
         playersContainer.appendChild(playerEl);
       });
       potAmountSpan.textContent = pot;
+      updateNextRoundButtonState();
     }
 
-    // Start the game with selected number of players and starting chips
     function startGame() {
       const numPlayers = parseInt(numPlayersSelect.value, 10);
       const startingChips = parseInt(startingChipsInput.value, 10);
 
       players = [];
       for (let i = 0; i < numPlayers; i++) {
-        players.push({ chips: startingChips, startingChips: startingChips, currentBet: 0 });
+        players.push({ chips: startingChips, startingChips: startingChips, currentBet: 0, bankrupt: false });
       }
       pot = 0;
       currentTurnIndex = 0;
@@ -424,32 +477,19 @@
       gamePhase = 'raising';
       renderPlayers();
 
-    // nextTurnBtn.disabled = true; // Disable next turn button since all players raise together now
 
-      // Show game page, hide start page
       startPage.style.display = 'none';
       gamePage.style.display = 'block';
     }
 
-    // Confirm reset chips for a specific player to starting chips
-    function confirmResetChips(playerIndex) {
-      // Removed confirmation alert as per user request
-      resetChips(playerIndex);
-    }
-
-    // Reset chips for a specific player to starting chips and return bet from pot
-    function resetChips(playerIndex) {
-      const player = players[playerIndex];
-      // Return player's current bet from pot to player's chips
-      pot -= player.currentBet;
-      player.chips += player.currentBet;
-      player.currentBet = 0;
-      renderPlayers();
-    }
 
     // Move to the next player's turn
     function nextTurn() {
-      currentTurnIndex = (currentTurnIndex + 1) % players.length;
+      let nextIndex = (currentTurnIndex + 1) % players.length;
+      nextIndex = getNextValidPlayerIndex(nextIndex);
+      if (nextIndex !== -1) {
+        currentTurnIndex = nextIndex;
+      }
       renderPlayers();
     }
 
@@ -460,20 +500,27 @@
       currentTurnIndex = 0;
       gamePhase = 'raising';
       renderPlayers();
+      updateNextRoundButtonState();
     }
 
     // Start the next round with dealer cycle: advance dealer, reset pot and bets, set phase to raising
     function startNextRoundWithDealerCycle() {
       pot = 0;
       callAmount = 0;
-      // Reset current bets for all players
+      // Reset current bets for all players and update bankrupt status
       players.forEach(player => {
         player.currentBet = 0;
+        player.bankrupt = player.chips === 0;
       });
-      // Advance dealer to next player
-      currentTurnIndex = (currentTurnIndex + 1) % players.length;
+      // Advance dealer to next valid player
+      let nextIndex = (currentTurnIndex + 1) % players.length;
+      nextIndex = getNextValidPlayerIndex(nextIndex);
+      if (nextIndex !== -1) {
+        currentTurnIndex = nextIndex;
+      }
       gamePhase = 'raising';
       renderPlayers();
+      updateNextRoundButtonState();
     }
 
     // Place a bet of given amount or all-in for specified player index
@@ -490,8 +537,8 @@
         player.chips -= betAmount;
         pot += betAmount;
         player.currentBet += betAmount; // Track player's current bet
-      // updateCallAmount(betAmount);
         renderPlayers();
+        updateNextRoundButtonState();
       }
     }
 
@@ -527,7 +574,20 @@
       players[winnerIndex].chips += pot;
       pot = 0;
       renderPlayers();
+      updateNextRoundButtonState();
       closeChooseWinnerModal();
+    }
+  </script>
+  <script>
+    function updateNextRoundButtonState() {
+      const nextRoundBtn = document.getElementById('nextRoundBtn');
+      if (pot > 0) {
+        nextRoundBtn.disabled = true;
+        nextRoundBtn.title = 'Next round is locked while there is money in the pot.';
+      } else {
+        nextRoundBtn.disabled = false;
+        nextRoundBtn.title = '';
+      }
     }
   </script>
 </body>
