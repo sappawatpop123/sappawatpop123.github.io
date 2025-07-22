@@ -444,11 +444,11 @@
         <label><input type="radio" name="q16" value="7"><span>7</span></label>
       </div>
     </div>
-    <button type="submit">See My Personality</button>
+    <button type="submit">See My PSMD Colour</button>
   </form>
 
   <div id="result" aria-live="polite" aria-atomic="true" hidden>
-    <h2>Your Personality Result</h2>
+    <h2>Your PSMD Colour</h2>
     <p id="personalityType"></p>
     <div id="chart" role="img" aria-label="Personality chart with seriousness and -verting axes">
       <div class="quadrant top-left"></div>
@@ -471,9 +471,6 @@
   const personalityTypeEl = document.getElementById('personalityType');
   const userDot = document.getElementById('userDot');
 
-  // Questions mapping to axes and polarity
-  // Each question has axis: 'vert' or 'serious'
-  // polarity: 1 means higher value means more extrovert/serious, -1 means reverse
   const questions = {
     q1: { axis: 'vert', polarity: -1 }, // I prefer quiet time alone (introvert)
     q2: { axis: 'serious', polarity: 1 }, // I like to plan things carefully
@@ -503,7 +500,6 @@
 
     for (const [q, { axis, polarity }] of Object.entries(questions)) {
       const val = parseInt(form[q].value);
-      // Adjust val to range -3 to +3 (7-point scale centered at 4)
       const adjusted = (val - 4) * polarity;
       if (axis === 'vert') {
         vertScore += adjusted;
@@ -514,8 +510,6 @@
       }
     }
 
-    // Normalize scores to 0-100 scale
-    // Max absolute score per axis = 3 * number of questions on that axis
     const vertMax = vertCount * 3;
     const seriousMax = seriousCount * 3;
 
