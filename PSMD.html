@@ -500,7 +500,6 @@
 
     for (const [q, { axis, polarity }] of Object.entries(questions)) {
       const val = parseInt(form[q].value);
-      // Adjust val to range -3 to +3 (7-point scale centered at 4)
       const adjusted = (val - 4) * polarity;
       if (axis === 'vert') {
         vertScore += adjusted;
@@ -511,8 +510,6 @@
       }
     }
 
-    // Normalize scores to 0-100 scale
-    // Max absolute score per axis = 3 * number of questions on that axis
     const vertMax = vertCount * 3;
     const seriousMax = seriousCount * 3;
 
