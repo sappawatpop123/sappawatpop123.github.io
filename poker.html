@@ -287,7 +287,7 @@
 
       playersContainer.addEventListener('click', (event) => {
         const target = event.target;
-        if (target.tagName === 'BUTTON') {
+      if (target.tagName === 'BUTTON') {
           let playerDiv = target.closest('.player');
           if (!playerDiv) return;
           const playerIndex = Array.from(playersContainer.children).indexOf(playerDiv);
@@ -296,8 +296,20 @@
           const betValue = target.getAttribute('data-bet-value');
           if (betValue && gamePhase === 'raising') {
             placeBet(parseInt(betValue, 10), playerIndex);
+          } else if (target.classList.contains('call') && gamePhase === 'raising') {
+            // Calculate highest currentBet among players
+            const highestBet = Math.max(...players.map(p => p.currentBet));
+            const player = players[playerIndex];
+            const callAmount = highestBet - player.currentBet;
+            if (callAmount > player.chips) {
+              placeBet('all-in', playerIndex);
+            } else if (callAmount > 0) {
+              placeBet(callAmount, playerIndex);
+            }
+            // Removed nextTurn() call as per user request
           } else if (target.classList.contains('all-in') && gamePhase === 'raising') {
             placeBet('all-in', playerIndex);
+            // Removed nextTurn() call to prevent role change on all-in as per user request
           }
         }
       });
@@ -371,6 +383,14 @@
         betControls.appendChild(btn);
       });
 
+      // Add Call button
+      const callBtn = document.createElement('button');
+      callBtn.textContent = 'Call';
+      callBtn.title = 'Call the highest raise';
+      callBtn.classList.add('call');
+      callBtn.disabled = player.chips === 0 || gamePhase !== 'raising';
+      betControls.appendChild(callBtn);
+
       const allInBtn = document.createElement('button');
       allInBtn.textContent = 'All-In';
       allInBtn.title = 'Bet all chips';
@@ -391,7 +411,7 @@ function getRoleIndex(playerIndex) {
     let count = 0;
     let idx = currentTurnIndex;
     while (count < totalPlayers) {
-      if (players[idx].chips > 0) {
+      if (!players[idx].bankrupt) {
         validPlayers.push(idx);
       }
       idx = (idx + 1) % totalPlayers;
@@ -414,7 +434,7 @@ function getRoleIndex(playerIndex) {
     let nextIndex = startIndex;
     const totalPlayers = players.length;
     for (let i = 0; i < totalPlayers; i++) {
-      if (players[nextIndex].chips > 0) {
+      if (!players[nextIndex].bankrupt) {
         return nextIndex;
       }
       nextIndex = (nextIndex + 1) % totalPlayers;
@@ -432,26 +452,26 @@ function getRoleIndex(playerIndex) {
     renderPlayers();
   }
   
-  // Start the next round with dealer cycle skipping bankrupt players
-  function startNextRoundWithDealerCycle() {
-    pot = 0;
-    callAmount = 0;
-    // Reset current bets for all players
-    players.forEach(player => {
-      player.currentBet = 0;
-      // Update bankrupt status here
-      player.bankrupt = player.chips === 0;
-    });
-    // Advance dealer to next valid player
-    let nextIndex = (currentTurnIndex + 1) % players.length;
-    nextIndex = getNextValidPlayerIndex(nextIndex);
-    if (nextIndex !== -1) {
-      currentTurnIndex = nextIndex;
+    // Start the next round with dealer cycle skipping bankrupt players
+    function startNextRoundWithDealerCycle() {
+      pot = 0;
+      callAmount = 0;
+      // Reset current bets for all players
+      players.forEach(player => {
+        player.currentBet = 0;
+        // Update bankrupt status here
+        player.bankrupt = player.chips === 0;
+      });
+      // Advance dealer to next valid player
+      let nextIndex = (currentTurnIndex + 1) % players.length;
+      nextIndex = getNextValidPlayerIndex(nextIndex);
+      if (nextIndex !== -1) {
+        currentTurnIndex = nextIndex;
+      }
+      gamePhase = 'raising';
+      renderPlayers();
+      updateNextRoundButtonState();
     }
-    gamePhase = 'raising';
-    renderPlayers();
-    updateNextRoundButtonState();
-  }
 
     function renderPlayers() {
       playersContainer.innerHTML = '';
@@ -483,40 +503,10 @@ function getRoleIndex(playerIndex) {
     }
 
 
-    // Move to the next player's turn
-    function nextTurn() {
-      let nextIndex = (currentTurnIndex + 1) % players.length;
-      nextIndex = getNextValidPlayerIndex(nextIndex);
-      if (nextIndex !== -1) {
-        currentTurnIndex = nextIndex;
-      }
-      renderPlayers();
-    }
-
     function startNextRound() {
       pot = 0;
       callAmount = 0;
       currentTurnIndex = 0;
-      gamePhase = 'raising';
-      renderPlayers();
-      updateNextRoundButtonState();
-    }
-
-    // Start the next round with dealer cycle: advance dealer, reset pot and bets, set phase to raising
-    function startNextRoundWithDealerCycle() {
-      pot = 0;
-      callAmount = 0;
-      // Reset current bets for all players and update bankrupt status
-      players.forEach(player => {
-        player.currentBet = 0;
-        player.bankrupt = player.chips === 0;
-      });
-      // Advance dealer to next valid player
-      let nextIndex = (currentTurnIndex + 1) % players.length;
-      nextIndex = getNextValidPlayerIndex(nextIndex);
-      if (nextIndex !== -1) {
-        currentTurnIndex = nextIndex;
-      }
       gamePhase = 'raising';
       renderPlayers();
       updateNextRoundButtonState();
@@ -572,6 +562,10 @@ function getRoleIndex(playerIndex) {
       // Transfer pot to winner
       players[winnerIndex].chips += pot;
       pot = 0;
+      // Reset current bets for all players after awarding pot
+      players.forEach(player => {
+        player.currentBet = 0;
+      });
       renderPlayers();
       updateNextRoundButtonState();
       closeChooseWinnerModal();
