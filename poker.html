@@ -431,10 +431,8 @@
             } else if (callAmount > 0) {
               placeBet(callAmount, playerIndex);
             }
-            // Removed nextTurn() call as per user request
           } else if (target.classList.contains('all-in') && gamePhase === 'raising') {
             placeBet('all-in', playerIndex);
-            // Removed nextTurn() call to prevent role change on all-in as per user request
           }
         }
       });
