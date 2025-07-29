@@ -516,7 +516,6 @@
     const vertPercent = ((vertScore + vertMax) / (2 * vertMax)) * 100;
     const seriousPercent = ((seriousScore + seriousMax) / (2 * seriousMax)) * 100;
 
-    // Determine personality type
     let personality = '';
     if (vertPercent <= 50 && seriousPercent >= 50) personality = 'Wisdom (Blue): Introvert + Serious';
     else if (vertPercent > 50 && seriousPercent < 50) personality = 'Happiness (Yellow): Extrovert + Chill';
