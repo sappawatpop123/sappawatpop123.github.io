@@ -223,6 +223,119 @@
       <div>
         <button id="nextRoundBtn" type="button" style="margin-bottom: 0.5rem;">Next Round</button>
       </div>
+      <div>
+        <button id="showHandRankingsBtn" type="button" style="margin-bottom: 0.5rem;">Show Hand Rankings</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="handRankingsModal" style="display:none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); z-index: 1001; align-items: center; justify-content: center;">
+    <div style="background: #0b3d0b; border-radius: 12px; padding: 1rem 2rem; max-width: 400px; width: 90%; color: #f0e6d2; text-align: left; box-shadow: 0 0 15px #d4af37; overflow-y: auto; max-height: 80vh;">
+      <h2 style="text-align: center; margin-bottom: 1rem;">Poker Hand Rankings</h2>
+      <ol style="list-style: none; padding-left: 0;">
+        <li style="margin-bottom: 1rem;">
+          <strong>Royal Flush:</strong> 
+          <span style="margin-left: 0.5rem;">
+<img src="images/AS.png" alt="Ace of Hearts" style="height: 48px; vertical-align: middle;" />
+<img src="images/KS.png" alt="King of Hearts" style="height: 48px; vertical-align: middle;" />
+<img src="images/QS.png" alt="Queen of Hearts" style="height: 48px; vertical-align: middle;" />
+<img src="images/JS.png" alt="Jack of Hearts" style="height: 48px; vertical-align: middle;" />
+<img src="images/10S.png" alt="10 of Hearts" style="height: 48px; vertical-align: middle;" />
+          </span>
+          A, K, Q, J, 10, all the same suit.
+        </li>
+        <li style="margin-bottom: 1rem;">
+          <strong>Straight Flush:</strong> 
+          <span style="margin-left: 0.5rem;">
+<img src="images/2H.png" alt="2 of Hearts" style="height: 48px; vertical-align: middle;" />
+<img src="images/3H.png" alt="3 of Hearts" style="height: 48px; vertical-align: middle;" />
+<img src="images/4H.png" alt="4 of Hearts" style="height: 48px; vertical-align: middle;" />
+<img src="images/5H.png" alt="5 of Hearts" style="height: 48px; vertical-align: middle;" />
+<img src="images/6H.png" alt="6 of Hearts" style="height: 48px; vertical-align: middle;" />
+          </span>
+          Five cards in a sequence, all in the same suit.
+        </li>
+        <li style="margin-bottom: 1rem;">
+          <strong>Four of a Kind:</strong> 
+          <span style="margin-left: 0.5rem;">
+<img src="images/7D.png" alt="7 of Diamonds" style="height: 48px; vertical-align: middle;" />
+<img src="images/7H.png" alt="7 of Hearts" style="height: 48px; vertical-align: middle;" />
+<img src="images/7S.png" alt="7 of Spades" style="height: 48px; vertical-align: middle;" />
+<img src="images/7C.png" alt="7 of Clubs" style="height: 48px; vertical-align: middle;" />
+          </span>
+          All four cards of the same rank.
+        </li>
+        <li style="margin-bottom: 1rem;">
+          <strong>Full House:</strong> 
+          <span style="margin-left: 0.5rem;">
+<img src="images/8D.png" alt="8 of Diamonds" style="height: 48px; vertical-align: middle;" />
+<img src="images/8H.png" alt="8 of Hearts" style="height: 48px; vertical-align: middle;" />
+<img src="images/8S.png" alt="8 of Spades" style="height: 48px; vertical-align: middle;" />
+<img src="images/KC.png" alt="King of Clubs" style="height: 48px; vertical-align: middle;" />
+<img src="images/KD.png" alt="King of Diamonds" style="height: 48px; vertical-align: middle;" />
+          </span>
+          Three of a kind with a pair.
+        </li>
+        <li style="margin-bottom: 1rem;">
+          <strong>Flush:</strong> 
+          <span style="margin-left: 0.5rem;">
+<img src="images/AH.png" alt="Ace of Hearts" style="height: 48px; vertical-align: middle;" />
+<img src="images/2H.png" alt="2 of Hearts" style="height: 48px; vertical-align: middle;" />
+<img src="images/3H.png" alt="3 of Hearts" style="height: 48px; vertical-align: middle;" />
+<img src="images/4H.png" alt="4 of Hearts" style="height: 48px; vertical-align: middle;" />
+<img src="images/5H.png" alt="5 of Hearts" style="height: 48px; vertical-align: middle;" />
+          </span>
+          Any five cards of the same suit, but not in a sequence.
+        </li>
+        <li style="margin-bottom: 1rem;">
+          <strong>Straight:</strong> 
+          <span style="margin-left: 0.5rem;">
+<img src="images/AH.png" alt="Ace of Hearts" style="height: 48px; vertical-align: middle;" />
+<img src="images/2D.png" alt="2 of Diamonds" style="height: 48px; vertical-align: middle;" />
+<img src="images/3H.png" alt="3 of Hearts" style="height: 48px; vertical-align: middle;" />
+<img src="images/4S.png" alt="4 of Spades" style="height: 48px; vertical-align: middle;" />
+<img src="images/5H.png" alt="5 of Hearts" style="height: 48px; vertical-align: middle;" />
+          </span>
+          Five cards in a sequence, but not of the same suit.
+        </li>
+        <li style="margin-bottom: 1rem;">
+          <strong>Three of a Kind:</strong> 
+          <span style="margin-left: 0.5rem;">
+<img src="images/6D.png" alt="6 of Diamonds" style="height: 48px; vertical-align: middle;" />
+<img src="images/6H.png" alt="6 of Hearts" style="height: 48px; vertical-align: middle;" />
+<img src="images/6S.png" alt="6 of Spades" style="height: 48px; vertical-align: middle;" />
+          </span>
+          Three cards of the same rank.
+        </li>
+        <li style="margin-bottom: 1rem;">
+          <strong>Two Pair:</strong> 
+          <span style="margin-left: 0.5rem;">
+<img src="images/7D.png" alt="7 of Diamonds" style="height: 48px; vertical-align: middle;" />
+<img src="images/7H.png" alt="7 of Hearts" style="height: 48px; vertical-align: middle;" />
+<img src="images/6D.png" alt="6 of Diamonds" style="height: 48px; vertical-align: middle;" />
+<img src="images/6H.png" alt="6 of Hearts" style="height: 48px; vertical-align: middle;" />
+          </span>
+          Two different pairs.
+        </li>
+        <li style="margin-bottom: 1rem;">
+          <strong>One Pair:</strong> 
+          <span style="margin-left: 0.5rem;">
+<img src="images/8D.png" alt="8 of Diamonds" style="height: 48px; vertical-align: middle;" />
+<img src="images/8H.png" alt="8 of Hearts" style="height: 48px; vertical-align: middle;" />
+          </span>
+          Two cards of the same rank.
+        </li>
+        <li style="margin-bottom: 1rem;">
+          <strong>High Card:</strong> 
+          <span style="margin-left: 0.5rem;">
+<img src="images/AH.png" alt="Ace of Hearts" style="height: 48px; vertical-align: middle;" />
+          </span>
+          When you haven't made any of the hands above, the highest card plays.
+        </li>
+      </ol>
+      <div style="text-align: center; margin-top: 1rem;">
+        <button id="closeHandRankingsBtn" style="background: radial-gradient(circle at center, #d4af37 0%, #b8860b 80%); border: none; color: #2c2a1d; padding: 0.6rem 1.2rem; font-size: 1.1rem; font-weight: 900; border-radius: 50px; cursor: pointer; box-shadow: 0 0 10px #d4af37;">Close</button>
+      </div>
     </div>
   </div>
 
@@ -285,9 +398,21 @@
         startNextRoundWithDealerCycle();
       });
 
+      const showHandRankingsBtn = document.getElementById('showHandRankingsBtn');
+      const handRankingsModal = document.getElementById('handRankingsModal');
+      const closeHandRankingsBtn = document.getElementById('closeHandRankingsBtn');
+
+      showHandRankingsBtn.addEventListener('click', () => {
+        handRankingsModal.style.display = 'flex';
+      });
+
+      closeHandRankingsBtn.addEventListener('click', () => {
+        handRankingsModal.style.display = 'none';
+      });
+
       playersContainer.addEventListener('click', (event) => {
         const target = event.target;
-        if (target.tagName === 'BUTTON') {
+      if (target.tagName === 'BUTTON') {
           let playerDiv = target.closest('.player');
           if (!playerDiv) return;
           const playerIndex = Array.from(playersContainer.children).indexOf(playerDiv);
@@ -296,6 +421,16 @@
           const betValue = target.getAttribute('data-bet-value');
           if (betValue && gamePhase === 'raising') {
             placeBet(parseInt(betValue, 10), playerIndex);
+          } else if (target.classList.contains('call') && gamePhase === 'raising') {
+            // Calculate highest currentBet among players
+            const highestBet = Math.max(...players.map(p => p.currentBet));
+            const player = players[playerIndex];
+            const callAmount = highestBet - player.currentBet;
+            if (callAmount > player.chips) {
+              placeBet('all-in', playerIndex);
+            } else if (callAmount > 0) {
+              placeBet(callAmount, playerIndex);
+            }
           } else if (target.classList.contains('all-in') && gamePhase === 'raising') {
             placeBet('all-in', playerIndex);
           }
@@ -316,7 +451,6 @@
       if (player.bankrupt) {
         div.classList.add('bankrupt');
       }
-
       let angleOffset = Math.PI / 2;
       if (totalPlayers === 7) {
         angleOffset = Math.PI / 2.5;
@@ -371,27 +505,32 @@
         betControls.appendChild(btn);
       });
 
+      // Add Call button
+      const callBtn = document.createElement('button');
+      callBtn.textContent = 'Call';
+      callBtn.title = 'Call the highest raise';
+      callBtn.classList.add('call');
+      callBtn.disabled = player.chips === 0 || gamePhase !== 'raising';
+      betControls.appendChild(callBtn);
+
       const allInBtn = document.createElement('button');
       allInBtn.textContent = 'All-In';
       allInBtn.title = 'Bet all chips';
       allInBtn.classList.add('all-in');
       allInBtn.disabled = player.chips === 0 || gamePhase !== 'raising';
       betControls.appendChild(allInBtn);
-
       div.appendChild(betControls);
 
       return div;
     }
 
 function getRoleIndex(playerIndex) {
-    // We need to assign roles skipping bankrupt players
-    // Create an array of valid player indices starting from currentTurnIndex
     const validPlayers = [];
     const totalPlayers = players.length;
     let count = 0;
     let idx = currentTurnIndex;
     while (count < totalPlayers) {
-      if (players[idx].chips > 0) {
+      if (!players[idx].bankrupt) {
         validPlayers.push(idx);
       }
       idx = (idx + 1) % totalPlayers;
@@ -414,7 +553,7 @@ function getRoleIndex(playerIndex) {
     let nextIndex = startIndex;
     const totalPlayers = players.length;
     for (let i = 0; i < totalPlayers; i++) {
-      if (players[nextIndex].chips > 0) {
+      if (!players[nextIndex].bankrupt) {
         return nextIndex;
       }
       nextIndex = (nextIndex + 1) % totalPlayers;
@@ -432,26 +571,26 @@ function getRoleIndex(playerIndex) {
     renderPlayers();
   }
   
-  // Start the next round with dealer cycle skipping bankrupt players
-  function startNextRoundWithDealerCycle() {
-    pot = 0;
-    callAmount = 0;
-    // Reset current bets for all players
-    players.forEach(player => {
-      player.currentBet = 0;
-      // Update bankrupt status here
-      player.bankrupt = player.chips === 0;
-    });
-    // Advance dealer to next valid player
-    let nextIndex = (currentTurnIndex + 1) % players.length;
-    nextIndex = getNextValidPlayerIndex(nextIndex);
-    if (nextIndex !== -1) {
-      currentTurnIndex = nextIndex;
+    // Start the next round with dealer cycle skipping bankrupt players
+    function startNextRoundWithDealerCycle() {
+      pot = 0;
+      callAmount = 0;
+      // Reset current bets for all players
+      players.forEach(player => {
+        player.currentBet = 0;
+        // Update bankrupt status here
+        player.bankrupt = player.chips === 0;
+      });
+      // Advance dealer to next valid player
+      let nextIndex = (currentTurnIndex + 1) % players.length;
+      nextIndex = getNextValidPlayerIndex(nextIndex);
+      if (nextIndex !== -1) {
+        currentTurnIndex = nextIndex;
+      }
+      gamePhase = 'raising';
+      renderPlayers();
+      updateNextRoundButtonState();
     }
-    gamePhase = 'raising';
-    renderPlayers();
-    updateNextRoundButtonState();
-  }
 
     function renderPlayers() {
       playersContainer.innerHTML = '';
@@ -483,41 +622,10 @@ function getRoleIndex(playerIndex) {
     }
 
 
-    // Move to the next player's turn
-    function nextTurn() {
-      let nextIndex = (currentTurnIndex + 1) % players.length;
-      nextIndex = getNextValidPlayerIndex(nextIndex);
-      if (nextIndex !== -1) {
-        currentTurnIndex = nextIndex;
-      }
-      renderPlayers();
-    }
-
-    // Start the next round: reset pot, callAmount, set phase to raising, reset currentTurnIndex
     function startNextRound() {
       pot = 0;
       callAmount = 0;
       currentTurnIndex = 0;
-      gamePhase = 'raising';
-      renderPlayers();
-      updateNextRoundButtonState();
-    }
-
-    // Start the next round with dealer cycle: advance dealer, reset pot and bets, set phase to raising
-    function startNextRoundWithDealerCycle() {
-      pot = 0;
-      callAmount = 0;
-      // Reset current bets for all players and update bankrupt status
-      players.forEach(player => {
-        player.currentBet = 0;
-        player.bankrupt = player.chips === 0;
-      });
-      // Advance dealer to next valid player
-      let nextIndex = (currentTurnIndex + 1) % players.length;
-      nextIndex = getNextValidPlayerIndex(nextIndex);
-      if (nextIndex !== -1) {
-        currentTurnIndex = nextIndex;
-      }
       gamePhase = 'raising';
       renderPlayers();
       updateNextRoundButtonState();
@@ -573,6 +681,10 @@ function getRoleIndex(playerIndex) {
       // Transfer pot to winner
       players[winnerIndex].chips += pot;
       pot = 0;
+      // Reset current bets for all players after awarding pot
+      players.forEach(player => {
+        player.currentBet = 0;
+      });
       renderPlayers();
       updateNextRoundButtonState();
       closeChooseWinnerModal();
