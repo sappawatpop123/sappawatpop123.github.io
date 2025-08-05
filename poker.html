@@ -671,23 +671,87 @@ function getRoleIndex(playerIndex) {
       chooseWinnerModal.style.display = 'none';
     }
 
-    // Confirm the winner selection and transfer pot chips
+    // Calculate side pots based on player contributions
+    function calculateSidePots() {
+      const activePlayers = players.filter(p => !p.bankrupt);
+      const contributions = activePlayers.map(p => p.currentBet);
+      const uniqueContributions = [...new Set(contributions)].sort((a, b) => a - b);
+      
+      const sidePots = [];
+      
+      for (let i = 0; i < uniqueContributions.length; i++) {
+        const contributionLevel = uniqueContributions[i];
+        const previousLevel = i > 0 ? uniqueContributions[i - 1] : 0;
+        const eligiblePlayers = activePlayers.filter(p => p.currentBet >= contributionLevel);
+        
+        if (eligiblePlayers.length > 0) {
+          let potAmount = 0;
+          activePlayers.forEach(player => {
+            const contribution = Math.min(player.currentBet - previousLevel, contributionLevel - previousLevel);
+            if (contribution > 0) {
+              potAmount += contribution;
+            }
+          });
+          
+          if (potAmount > 0) {
+            sidePots.push({
+              amount: potAmount,
+              eligiblePlayers: eligiblePlayers.map(p => players.indexOf(p)),
+              maxContribution: contributionLevel
+            });
+          }
+        }
+      }
+      
+      return sidePots;
+    }
+
+    // Confirm the winner selection and distribute pots correctly
     function confirmChooseWinner() {
       const winnerIndex = parseInt(winnerSelect.value, 10);
       if (isNaN(winnerIndex) || winnerIndex < 0 || winnerIndex >= players.length) {
         alert('Invalid player selection.');
         return;
       }
-      // Transfer pot to winner
-      players[winnerIndex].chips += pot;
+      
+      // Calculate side pots
+      const sidePots = calculateSidePots();
+      
+      // Distribute each side pot to the winner if they're eligible
+      let totalWon = 0;
+      sidePots.forEach(sidePot => {
+        if (sidePot.eligiblePlayers.includes(winnerIndex)) {
+          players[winnerIndex].chips += sidePot.amount;
+          totalWon += sidePot.amount;
+        }
+      });
+      
+      // Return excess chips to other players
+      players.forEach((player, index) => {
+        if (index !== winnerIndex) {
+          const excess = Math.max(0, player.currentBet - totalWon);
+          if (excess > 0) {
+            player.chips += excess;
+          }
+        }
+      });
+      
       pot = 0;
-      // Reset current bets for all players after awarding pot
+      
+      // Reset current bets for all players
       players.forEach(player => {
         player.currentBet = 0;
       });
+      
       renderPlayers();
       updateNextRoundButtonState();
       closeChooseWinnerModal();
+      
+      // Show side pot information - removed alert pop-up
+      if (sidePots.length > 1) {
+        // Side pots distributed notification removed to prevent alert pop-up
+        console.log(`Side pots distributed! Winner received ${totalWon} chips across ${sidePots.length} pot(s).`);
+      }
     }
   </script>
   <script>

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wavelength Board Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #006400, #00a000);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+    h1 {
+      margin-bottom: 10px;
+      z-index: 10;
+      position: relative;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+    #game {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      width: 600px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      z-index: 10;
+      position: relative;
+    }
+    #dial-container {
+      position: relative;
+      width: 400px;
+      height: 200px;
+      margin: 20px auto;
+      overflow: hidden;
+    }
+    #dial {
+      width: 100%;
+      height: 400px;
+      border-radius: 200px 200px 0 0;
+      background: linear-gradient(90deg, #ff6f61 0%, #f7d794 50%, #ff6f61 100%);
+      position: relative;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
+      user-select: none;
+      transform-origin: center bottom;
+      transform: translateY(200px);
+    }
+    #pointer {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      width: 6px;
+      height: 180px;
+      background: #333;
+      transform-origin: bottom center;
+      transform: rotate(0deg) translate(-50%, 0);
+      transition: transform 0.5s ease;
+      border-radius: 3px;
+      pointer-events: none;
+    }
+    #target-zone {
+      display: none;
+    }
+    #controls {
+      text-align: center;
+      margin-top: 20px;
+    }
+    button {
+      background: #0080ff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin: 0 10px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: #005bb5;
+    }
+    #message {
+      margin-top: 15px;
+      font-size: 18px;
+      min-height: 24px;
+    }
+    #scoreboard {
+      margin-top: 20px;
+      font-size: 18px;
+      display: flex;
+      justify-content: space-around;
+    }
+    #scoreboard div {
+      background: #e0e0e0;
+      padding: 10px 20px;
+      border-radius: 8px;
+      width: 45%;
+      text-align: center;
+    }
+    /* Wave background at bottom */
+    .wave {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 150px;
+      background: linear-gradient(90deg, #00ff00 0%, #00cc00 50%, #009900 100%);
+      border-radius: 100% 100% 0 0 / 100% 100% 0 0;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
+      transform: translateY(50%);
+      z-index: 5;
+    }
+  </style>
+</head>
+<body>
+  <h1>Wavelength Board Game</h1>
+  <div id="game">
+    <div id="dial-container">
+      <div id="dial"></div>
+      <div id="target-zone"></div>
+      <div id="pointer"></div>
+    </div>
+    <div id="controls">
+      <button id="spin-btn">Spin Dial</button>
+      <button id="guess-btn" disabled>Make Guess</button>
+    </div>
+    <div id="message"></div>
+    <div id="scoreboard">
+      <div>
+        <strong>Team A Score:</strong> <span id="scoreA">0</span>
+      </div>
+      <div>
+        <strong>Team B Score:</strong> <span id="scoreB">0</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const dial = document.getElementById('dial');
+    const pointer = document.getElementById('pointer');
+    const targetZone = document.getElementById('target-zone');
+    const spinBtn = document.getElementById('spin-btn');
+    const guessBtn = document.getElementById('guess-btn');
+    const message = document.getElementById('message');
+    const scoreA = document.getElementById('scoreA');
+    const scoreB = document.getElementById('scoreB');
+
+    let pointerAngle = 0;
+    let targetStartAngle = 0;
+    let targetSize = 30; // degrees size of target zone
+    let currentTeam = 'A';
+    let scores = { A: 0, B: 0 };
+    let gameState = 'waiting'; // 'waiting', 'spun', 'guessed'
+
+    // Pattern for pointer length increments (in pixels)
+    const pointerLengthPattern = [2, 3, 4, 3, 2];
+    let pointerLengthIndex = 0;
+    const basePointerLength = 180; // base height in px
+
+    function randomAngle(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    function setPointerAngle(angle) {
+      pointerAngle = angle % 180;
+      // Adjust rotation to be in the top half by offsetting -90 degrees
+      const adjustedAngle = pointerAngle - 90;
+      pointer.style.transform = `rotate(${adjustedAngle}deg) translate(-50%, 0)`;
+      // Update pointer length based on pattern
+      const lengthIncrement = pointerLengthPattern[pointerLengthIndex];
+      pointer.style.height = `${basePointerLength + lengthIncrement}px`;
+    }
+
+    function setTargetZone(angle) {
+      targetStartAngle = angle % 180;
+      targetZone.style.transform = `rotate(${targetStartAngle}deg) translate(-50%, 0)`;
+    }
+
+    function spinDial() {
+      if (gameState !== 'waiting') return;
+      // Randomly position the target zone somewhere on the dial
+      const targetAngle = randomAngle(0, 180 - targetSize);
+      setTargetZone(targetAngle);
+
+      // Spin the pointer to a random angle
+      const spinAngle = randomAngle(0, 180);
+      setPointerAngle(spinAngle);
+
+      message.textContent = `Team ${currentTeam}, make your guess!`;
+      spinBtn.disabled = true;
+      guessBtn.disabled = false;
+      gameState = 'spun';
+
+      // Update pointer length index for next spin
+      pointerLengthIndex = (pointerLengthIndex + 1) % pointerLengthPattern.length;
+    }
+
+    function makeGuess() {
+      if (gameState !== 'spun') return;
+
+      // Calculate difference between pointer and target zone center
+      const targetCenter = (targetStartAngle + targetSize / 2) % 360;
+      let diff = Math.abs(pointerAngle - targetCenter);
+      if (diff > 180) diff = 360 - diff;
+
+      // Scoring based on difference
+      let points = 0;
+      if (diff < 5) points = 4;
+      else if (diff < 15) points = 3;
+      else if (diff < 30) points = 2;
+      else if (diff < 45) points = 1;
+
+      scores[currentTeam] += points;
+      message.textContent = `Team ${currentTeam} scored ${points} point${points !== 1 ? 's' : ''}!`;
+
+      // Update scoreboard
+      scoreA.textContent = scores.A;
+      scoreB.textContent = scores.B;
+
+      // Switch team
+      currentTeam = currentTeam === 'A' ? 'B' : 'A';
+
+      spinBtn.disabled = false;
+      guessBtn.disabled = true;
+      gameState = 'waiting';
+    }
+
+    spinBtn.addEventListener('click', spinDial);
+    guessBtn.addEventListener('click', makeGuess);
+
+    // Initialize
+    setPointerAngle(0);
+    setTargetZone(0);
+  </script>
+</body>
+</html>
